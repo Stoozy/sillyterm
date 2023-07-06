@@ -1,30 +1,18 @@
 #include <windows.h>
 #include <stdio.h>
 
-LRESULT CALLBACK WindowProcessMessages(HWND hwnd, UINT msg, WPARAM param, LPARAM lparam);
+#include "silly.h"
 
-extern HRESULT sillyterm_init();
-extern void sillyterm_run();
-RECT drawRect = { 0, 0, 600, 800 };
+RECT drawRect = { 0, 0, 800, 600 };
 
-#define BUFSIZE 1024
-wchar_t display_buf[1024];
+wchar_t kbdBuffer[BUFSIZE];
 
-// TODO: create a main loop that:
-// 1. Reads from client applications output (the 'shell' itself)
-// 2. Display that output right away
-// 3. Read from stdin and forward that to the client application
 
-// Maybe in the future split this up into different threads
-
-#define CLASS_NAME TEXT("silly")
-#define WINDOW_NAME "SillyTerm"
 int WINAPI WinMain(HINSTANCE currentInstance, HINSTANCE previousInstance, PSTR cmdline, INT cmdCount) {
 
-	ZeroMemory(&display_buf, sizeof(wchar_t) * 1024);
-	memcpy(display_buf, "Testing\0", strlen( "Testing\0"));
-	WNDCLASSEX wc; 
-	ZeroMemory(&wc, sizeof(wc));
+	OutputDebugStringA("Hello debugger");
+
+	WNDCLASSEX wc; ZeroMemory(&wc, sizeof(wc));
 		
 	wc.hInstance = currentInstance;
 	wc.lpszClassName = CLASS_NAME;
@@ -52,27 +40,13 @@ int WINAPI WinMain(HINSTANCE currentInstance, HINSTANCE previousInstance, PSTR c
 	}
 
 	sillyterm_init();
-
-	PAINTSTRUCT ps;
-	HDC hdc = BeginPaint(window_handle, &ps);
-	// All painting occurs here, between BeginPaint and EndPaint.
-	FillRect(hdc, &ps.rcPaint, (HBRUSH)CreateSolidBrush(RGB(0, 0, 0)));
-
-
-	if (display_buf[0]) {
-		DrawTextA(hdc, &display_buf[0], -1, &drawRect, 0);
-	}
-
-	EndPaint(window_handle, &ps);
-
-	MSG msg;
-	while (GetMessage(&msg, NULL, 0, 0)) {
-		TranslateMessage(&msg);
-		DispatchMessageA(&msg);
-	}
+	sillyterm_run(window_handle);
 
 	return 0;
 }
+
+
+extern void sillyterm_handle_kbd(HWND hwnd, WPARAM wParam, LPARAM lParam);
 
 LRESULT CALLBACK WindowProcessMessages(HWND hwnd, UINT msg, WPARAM param, LPARAM lparam) {
 	switch (msg) {
@@ -82,17 +56,18 @@ LRESULT CALLBACK WindowProcessMessages(HWND hwnd, UINT msg, WPARAM param, LPARAM
 			exit(-1);
 			break;
 		}
-		case WM_PAINT:
-		{
+		// Keyboard input, passthrough
+		case WM_KEYDOWN:
+		case WM_KEYUP:
+		case WM_SYSKEYDOWN:
+		case WM_SYSKEYUP: sillyterm_handle_kbd(hwnd, param, lparam); break;
+
+		case WM_PAINT: {
 		    PAINTSTRUCT ps;
 		    HDC hdc = BeginPaint(hwnd, &ps);
 		    // All painting occurs here, between BeginPaint and EndPaint.
 			FillRect(hdc, &ps.rcPaint, (HBRUSH)CreateSolidBrush(RGB(0, 0, 0)));
 
-
-			if (display_buf[0]) {
-				DrawTextA(hdc, &display_buf[0], -1, &drawRect, 0);
-			}
 
 		    EndPaint(hwnd, &ps);
 		}

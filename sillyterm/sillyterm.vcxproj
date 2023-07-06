@@ -129,6 +129,11 @@
   <ItemGroup>
     <ClCompile Include="main.c" />
     <ClCompile Include="silly.c" />
+    <ClCompile Include="threads.c" />
+    <ClCompile Include="term.c" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="silly.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

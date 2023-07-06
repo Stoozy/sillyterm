@@ -1,6 +1,11 @@
 #include <Windows.h>
+#include "silly.h"
 
-extern wchar_t display_buf[1024];
+
+extern wchar_t kbdBuffer[BUFSIZE];
+
+ThreadData readerThreadData;
+ThreadData writerThreadData;
 
 HRESULT PrepareStartupInformation(HPCON hpc, STARTUPINFOEX* psi)
 {
@@ -10,7 +15,7 @@ HRESULT PrepareStartupInformation(HPCON hpc, STARTUPINFOEX* psi)
     si.StartupInfo.cb = sizeof(STARTUPINFOEX);
 
     // Discover the size required for the list
-    size_t bytesRequired;
+    size_t bytesRequired = 0;
     InitializeProcThreadAttributeList(NULL, 1, 0, &bytesRequired);
 
     // Allocate memory to represent the list
@@ -46,15 +51,10 @@ HRESULT PrepareStartupInformation(HPCON hpc, STARTUPINFOEX* psi)
 }
 
 
+HANDLE inputReadSide, outputWriteSide; // - Close these after CreateProcess of child application with pseudoconsole object.
+HANDLE outputReadSide, inputWriteSide; // - Hold onto these and use them for communication with the child through the pseudoconsole.
 
-// - Close these after CreateProcess of child application with pseudoconsole object.
-HANDLE inputReadSide, outputWriteSide;
-// - Hold onto these and use them for communication with the child through the pseudoconsole.
-HANDLE outputReadSide, inputWriteSide;
-
-
-HRESULT SetupPseudoConsole(COORD size)
-{
+HRESULT SetupPseudoConsole(COORD size) {
     HRESULT hr = S_OK;
 
     // Create communication channels
@@ -109,33 +109,53 @@ HRESULT SetupPseudoConsole(COORD size)
         return HRESULT_FROM_WIN32(GetLastError());
     }
     else {
-        wchar_t buf[1024];
-        DWORD bytesRead;
-        if (ReadFile(outputReadSide, &buf, 1024, &bytesRead, NULL)) {
-            if (bytesRead != 0)
-                memcpy(&display_buf[0], &buf[0], bytesRead);
-        }
-
+        CloseHandle(inputReadSide);
+        CloseHandle(outputWriteSide);
     }
 
     return hr;
 }
 
-wchar_t buf[1024];
-        
+wchar_t buf[BUFSIZE];
 
-void sillyterm_run() {
-    // runs one iteration
-    DWORD bytesRead;
-	if (ReadFile(outputReadSide, &buf, 1024, &bytesRead, NULL)) {
-		if (bytesRead != 0)
-			memcpy(&display_buf[0], &buf[0], bytesRead);
-	}
+void sillyterm_handle_kbd(HWND hwnd, WPARAM wParam, LPARAM lParam){
+    // TODO:
+    OutputDebugStringA("Got keyboard input!\n");
+}
+
+void sillyterm_run(HWND window_handle) {
+    MSG msg;
+    while (GetMessage(&msg, NULL, 0, 0)) {
+        TranslateMessage(&msg);
+        DispatchMessageA(&msg);
+
+        if(readerThreadData.signal){
+            readerThreadData.signal = FALSE;
+            OutputDebugStringA("Got signal at sillyterm_run() console output\n");
+            // data available
+            OutputDebugStringA(&readerThreadData.buffer);
+            OutputDebugStringA("\n");
+            ZeroMemory(&readerThreadData.buffer, sizeof(readerThreadData.buffer));
+        }
+
+    }
 }
 
 
 HRESULT sillyterm_init() {
     COORD coord = { 80, 32 };
-    return SetupPseudoConsole(coord);
-}
+    SetupPseudoConsole(coord);
 
+    readerThreadData.hFile = outputReadSide;
+    ZeroMemory(&readerThreadData.buffer, sizeof(readerThreadData.buffer));
+    readerThreadData.signal = FALSE;
+
+    writerThreadData.hFile = outputReadSide;
+    ZeroMemory(&writerThreadData.buffer, sizeof(writerThreadData.buffer));
+    writerThreadData.signal =  FALSE;
+
+
+    HANDLE readerThread =  CreateThread(NULL, 0, &ReaderThread, &readerThreadData, 0, NULL);
+    HANDLE writerThread =  CreateThread(NULL, 0, &WriterThread, 0, 0, NULL);
+
+}

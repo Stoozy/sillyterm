@@ -1,5 +1,5 @@
-﻿  main.c
-C:\Users\mahin\source\repos\sillyterm\sillyterm\main.c(43,53): warning C4133: 'function': incompatible types - from 'char [10]' to 'LPCWSTR'
-C:\Users\mahin\source\repos\sillyterm\sillyterm\main.c(63,18): warning C4133: 'function': incompatible types - from 'wchar_t *' to 'LPCSTR'
-C:\Users\mahin\source\repos\sillyterm\sillyterm\main.c(94,20): warning C4133: 'function': incompatible types - from 'wchar_t *' to 'LPCSTR'
+﻿  silly.c
+C:\Users\mahin\source\repos\sillyterm\sillyterm\silly.c(136,56): warning C4047: 'function': 'LPCSTR' differs in levels of indirection from 'wchar_t (*)[1024]'
+C:\Users\mahin\source\repos\sillyterm\sillyterm\silly.c(136,32): warning C4024: 'OutputDebugStringA': different types for formal and actual parameter 1
+C:\Users\mahin\source\repos\sillyterm\sillyterm\silly.c(161): warning C4716: 'sillyterm_init': must return a value
   sillyterm.vcxproj -> C:\Users\mahin\source\repos\sillyterm\x64\Debug\sillyterm.exe
