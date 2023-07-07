@@ -11,6 +11,7 @@ typedef struct thread_data {
   HANDLE hFile;
   wchar_t buffer[BUFSIZE];
   BOOL signal;
+  DWORD sz;
 } ThreadData;
 
 

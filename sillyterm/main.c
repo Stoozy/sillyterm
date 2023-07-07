@@ -10,8 +10,6 @@ wchar_t kbdBuffer[BUFSIZE];
 
 int WINAPI WinMain(HINSTANCE currentInstance, HINSTANCE previousInstance, PSTR cmdline, INT cmdCount) {
 
-	OutputDebugStringA("Hello debugger");
-
 	WNDCLASSEX wc; ZeroMemory(&wc, sizeof(wc));
 		
 	wc.hInstance = currentInstance;

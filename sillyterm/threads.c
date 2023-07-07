@@ -4,6 +4,19 @@
 DWORD WINAPI WriterThread(LPVOID lparam){
   ThreadData * threadData = (ThreadData*)lparam;
   // TODO:
+
+  for(;;){
+    if(threadData->signal){
+      // data available, write
+      DWORD bytesWritten = 0;
+      if( WriteFile(threadData->hFile, threadData->buffer,  threadData->sz, &bytesWritten, 0)  && bytesWritten == threadData->sz){
+        threadData->signal = FALSE;
+        threadData->sz = 0;
+        OutputDebugStringA("Data written!\n");
+      }
+    }
+  }
+
 }
 
 DWORD WINAPI ReaderThread(LPVOID lparam){

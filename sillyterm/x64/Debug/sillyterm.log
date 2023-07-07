@@ -1,5 +1,9 @@
 ﻿  silly.c
-C:\Users\mahin\source\repos\sillyterm\sillyterm\silly.c(136,56): warning C4047: 'function': 'LPCSTR' differs in levels of indirection from 'wchar_t (*)[1024]'
-C:\Users\mahin\source\repos\sillyterm\sillyterm\silly.c(136,32): warning C4024: 'OutputDebugStringA': different types for formal and actual parameter 1
-C:\Users\mahin\source\repos\sillyterm\sillyterm\silly.c(161): warning C4716: 'sillyterm_init': must return a value
+C:\Users\mahin\source\repos\sillyterm\sillyterm\silly.c(139,16): warning C4244: 'initializing': conversion from 'WPARAM' to 'char', possible loss of data
+C:\Users\mahin\source\repos\sillyterm\sillyterm\silly.c(167,56): warning C4047: 'function': 'LPCSTR' differs in levels of indirection from 'wchar_t (*)[1024]'
+C:\Users\mahin\source\repos\sillyterm\sillyterm\silly.c(167,32): warning C4024: 'OutputDebugStringA': different types for formal and actual parameter 1
+C:\Users\mahin\source\repos\sillyterm\sillyterm\silly.c(187,38): warning C4047: 'function': 'char *' differs in levels of indirection from 'wchar_t (*)[1024]'
+C:\Users\mahin\source\repos\sillyterm\sillyterm\silly.c(187,14): warning C4024: 'strcpy_s': different types for formal and actual parameter 1
+C:\Users\mahin\source\repos\sillyterm\sillyterm\silly.c(188,27): warning C4267: '=': conversion from 'size_t' to 'DWORD', possible loss of data
+C:\Users\mahin\source\repos\sillyterm\sillyterm\silly.c(195): warning C4716: 'sillyterm_init': must return a value
   sillyterm.vcxproj -> C:\Users\mahin\source\repos\sillyterm\x64\Debug\sillyterm.exe

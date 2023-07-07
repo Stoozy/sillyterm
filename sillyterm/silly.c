@@ -121,6 +121,37 @@ wchar_t buf[BUFSIZE];
 void sillyterm_handle_kbd(HWND hwnd, WPARAM wParam, LPARAM lParam){
     // TODO:
     OutputDebugStringA("Got keyboard input!\n");
+
+    WORD vkCode = LOWORD(wParam);                                 // virtual-key code
+    WORD keyFlags = HIWORD(lParam);
+
+    WORD scanCode = LOBYTE(keyFlags);                             // scan code
+    BOOL isExtendedKey = (keyFlags & KF_EXTENDED) == KF_EXTENDED; // extended-key flag, 1 if scancode has 0xE0 prefix
+
+    if (isExtendedKey)
+        scanCode = MAKEWORD(scanCode, 0xE0);
+
+    BOOL wasKeyDown = (keyFlags & KF_REPEAT) == KF_REPEAT;        // previous key-state flag, 1 on autorepeat
+    WORD repeatCount = LOWORD(lParam);                            // repeat count, > 0 if several keydown messages was combined into one message
+
+    BOOL isKeyReleased = (keyFlags & KF_UP) == KF_UP;             // transition-state flag, 1 on keyup
+
+    char key = wParam;
+    if(key == 'A'){
+        OutputDebugStringA("A was pressed\n");
+    }
+
+
+    // if we want to distinguish these keys:
+    switch (vkCode)
+    {
+    case VK_SHIFT:   // converts to VK_LSHIFT or VK_RSHIFT
+    case VK_CONTROL: // converts to VK_LCONTROL or VK_RCONTROL
+    case VK_MENU:    // converts to VK_LMENU or VK_RMENU
+        vkCode = LOWORD(MapVirtualKeyW(scanCode, MAPVK_VSC_TO_VK_EX));
+        break;
+    }
+
 }
 
 void sillyterm_run(HWND window_handle) {
@@ -150,12 +181,15 @@ HRESULT sillyterm_init() {
     ZeroMemory(&readerThreadData.buffer, sizeof(readerThreadData.buffer));
     readerThreadData.signal = FALSE;
 
-    writerThreadData.hFile = outputReadSide;
+    writerThreadData.hFile = inputWriteSide;
     ZeroMemory(&writerThreadData.buffer, sizeof(writerThreadData.buffer));
-    writerThreadData.signal =  FALSE;
-
+    const char * cmd = "echo Hello, World!\r\n";
+    strcpy_s(&writerThreadData.buffer, strlen(cmd)+1, cmd);
+    writerThreadData.sz = strlen(cmd);
+    writerThreadData.signal =  TRUE;
 
     HANDLE readerThread =  CreateThread(NULL, 0, &ReaderThread, &readerThreadData, 0, NULL);
-    HANDLE writerThread =  CreateThread(NULL, 0, &WriterThread, 0, 0, NULL);
+    for(int i=0; i<INT_MAX; i++);
+    HANDLE writerThread =  CreateThread(NULL, 0, &WriterThread, &writerThreadData, 0, NULL);
 
 }
