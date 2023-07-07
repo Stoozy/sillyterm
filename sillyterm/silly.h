@@ -17,7 +17,6 @@ typedef struct thread_data {
 
 DWORD WINAPI ReaderThread(LPVOID lparam);
 DWORD WINAPI WriterThread(LPVOID lparam);
-DWORD WINAPI KBDReaderThread(LPVOID lparam);
 
 LRESULT CALLBACK WindowProcessMessages(HWND hwnd, UINT msg, WPARAM param, LPARAM lparam);
 

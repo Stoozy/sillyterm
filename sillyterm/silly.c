@@ -1,6 +1,6 @@
 #include <Windows.h>
 #include "silly.h"
-
+#include "renderer.h"
 
 extern wchar_t kbdBuffer[BUFSIZE];
 
@@ -54,7 +54,8 @@ HRESULT PrepareStartupInformation(HPCON hpc, STARTUPINFOEX* psi)
 HANDLE inputReadSide, outputWriteSide; // - Close these after CreateProcess of child application with pseudoconsole object.
 HANDLE outputReadSide, inputWriteSide; // - Hold onto these and use them for communication with the child through the pseudoconsole.
 
-HRESULT SetupPseudoConsole(COORD size) {
+HRESULT SetupPseudoConsole(COORD size)
+{
     HRESULT hr = S_OK;
 
     // Create communication channels
@@ -118,9 +119,17 @@ HRESULT SetupPseudoConsole(COORD size) {
 
 wchar_t buf[BUFSIZE];
 
+struct {
+    BOOL shiftDown;
+    BOOL ctrlDown;
+    BOOL altDown;
+    BOOL caps;
+} kbdState =  {FALSE, FALSE, FALSE};
+
+
 void sillyterm_handle_kbd(HWND hwnd, WPARAM wParam, LPARAM lParam){
     // TODO:
-    OutputDebugStringA("Got keyboard input!\n");
+    // OutputDebugStringA("Got keyboard input!\n");
 
     WORD vkCode = LOWORD(wParam);                                 // virtual-key code
     WORD keyFlags = HIWORD(lParam);
@@ -136,25 +145,60 @@ void sillyterm_handle_kbd(HWND hwnd, WPARAM wParam, LPARAM lParam){
 
     BOOL isKeyReleased = (keyFlags & KF_UP) == KF_UP;             // transition-state flag, 1 on keyup
 
-    char key = wParam;
-    if(key == 'A'){
-        OutputDebugStringA("A was pressed\n");
-    }
-
-
     // if we want to distinguish these keys:
     switch (vkCode)
     {
+    case VK_CAPITAL: kbdState.caps = !kbdState.caps; break;
     case VK_SHIFT:   // converts to VK_LSHIFT or VK_RSHIFT
-    case VK_CONTROL: // converts to VK_LCONTROL or VK_RCONTROL
-    case VK_MENU:    // converts to VK_LMENU or VK_RMENU
-        vkCode = LOWORD(MapVirtualKeyW(scanCode, MAPVK_VSC_TO_VK_EX));
+        if(isKeyReleased) kbdState.shiftDown = FALSE;
+        else kbdState.shiftDown = TRUE;
         break;
+    case VK_CONTROL: // converts to VK_LCONTROL or VK_RCONTROL
+        if(isKeyReleased) kbdState.ctrlDown = FALSE;
+        else kbdState.ctrlDown = TRUE;
+        break;
+    case VK_MENU:    // converts to VK_LMENU or VK_RMENU
+        if(isKeyReleased) kbdState.altDown = FALSE;
+        else kbdState.altDown = TRUE;
+        break;
+    case VK_RETURN:{
+        const char * cmd = "echo Hello, World!\r\n";
+        strcpy_s(&writerThreadData.buffer, strlen(cmd)+1, cmd);
+        writerThreadData.sz = strlen(cmd);
+        writerThreadData.signal =  TRUE;
+        break;
+    }
+    default:{
+        // ascii chars
+        if(vkCode <= 0x5A && vkCode >= 0x41){
+            if(isKeyReleased)
+                return;
+            if(!kbdState.shiftDown && !kbdState.caps) vkCode += 0x20;
+
+            const char msg[256];
+            sprintf_s( msg, 200, "sillyterm_handle_kbd(): %c was pressed \n\0", vkCode);
+            OutputDebugStringA(msg);
+        }else{
+            const char msg[256];
+            sprintf_s( msg, 200, "sillyterm_handle_kbd(): Unhandled vkCode : 0x%x\n\0", vkCode);
+            OutputDebugStringA(msg);
+        }
+
+        break;
+    }
     }
 
 }
 
-void sillyterm_run(HWND window_handle) {
+void sillyterm_handle_paint(HWND hwnd, WPARAM wParam, LPARAM lParam){
+    // TODO: call renderer code from here
+}
+
+void sillyterm_handle_resize(HWND hwnd, WPARAM wParam, LPARAM lParam){
+    // TODO: resize pseudoconsole here
+}
+
+void sillyterm_run() {
     MSG msg;
     while (GetMessage(&msg, NULL, 0, 0)) {
         TranslateMessage(&msg);
@@ -164,7 +208,7 @@ void sillyterm_run(HWND window_handle) {
             readerThreadData.signal = FALSE;
             OutputDebugStringA("Got signal at sillyterm_run() console output\n");
             // data available
-            OutputDebugStringA(&readerThreadData.buffer);
+            OutputDebugStringA((LPCSTR) & readerThreadData.buffer);
             OutputDebugStringA("\n");
             ZeroMemory(&readerThreadData.buffer, sizeof(readerThreadData.buffer));
         }
@@ -183,13 +227,13 @@ HRESULT sillyterm_init() {
 
     writerThreadData.hFile = inputWriteSide;
     ZeroMemory(&writerThreadData.buffer, sizeof(writerThreadData.buffer));
+
     const char * cmd = "echo Hello, World!\r\n";
     strcpy_s(&writerThreadData.buffer, strlen(cmd)+1, cmd);
     writerThreadData.sz = strlen(cmd);
     writerThreadData.signal =  TRUE;
 
     HANDLE readerThread =  CreateThread(NULL, 0, &ReaderThread, &readerThreadData, 0, NULL);
-    for(int i=0; i<INT_MAX; i++);
     HANDLE writerThread =  CreateThread(NULL, 0, &WriterThread, &writerThreadData, 0, NULL);
 
 }

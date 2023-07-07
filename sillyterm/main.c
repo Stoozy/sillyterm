@@ -26,19 +26,20 @@ int WINAPI WinMain(HINSTANCE currentInstance, HINSTANCE previousInstance, PSTR c
 		exit(-1);
 	}
 	
-	HWND window_handle = CreateWindowEx(0, CLASS_NAME, WINDOW_NAME, WS_OVERLAPPEDWINDOW | WS_VISIBLE, CW_USEDEFAULT, CW_USEDEFAULT, 800, 600, NULL, NULL, wc.hInstance, NULL);
+	HWND hwnd = CreateWindowEx(0, CLASS_NAME, WINDOW_NAME, WS_OVERLAPPEDWINDOW | WS_VISIBLE, CW_USEDEFAULT, CW_USEDEFAULT, 800, 600, NULL, NULL, wc.hInstance, NULL);
 
-	if (window_handle) {
-		ShowWindow(window_handle, SW_SHOW);
-		UpdateWindow(window_handle);
+	if (hwnd) {
+		ShowWindow(hwnd, SW_SHOW);
+		UpdateWindow(hwnd);
 	}
 	else {
 		int err = GetLastError();
 		exit(-1);
 	}
 
+	renderer_init(hwnd);
 	sillyterm_init();
-	sillyterm_run(window_handle);
+	sillyterm_run();
 
 	return 0;
 }
