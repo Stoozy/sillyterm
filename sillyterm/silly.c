@@ -1,14 +1,15 @@
 #include <Windows.h>
 #include "silly.h"
 #include "renderer.h"
+#include "term.h"
 
 extern wchar_t kbdBuffer[BUFSIZE];
 
 ThreadData readerThreadData;
 ThreadData writerThreadData;
 
-HRESULT PrepareStartupInformation(HPCON hpc, STARTUPINFOEX* psi)
-{
+
+HRESULT PrepareStartupInformation(HPCON hpc, STARTUPINFOEX* psi) {
     // Prepare Startup Information structure
     STARTUPINFOEX si;
     ZeroMemory(&si, sizeof(si));
@@ -54,8 +55,7 @@ HRESULT PrepareStartupInformation(HPCON hpc, STARTUPINFOEX* psi)
 HANDLE inputReadSide, outputWriteSide; // - Close these after CreateProcess of child application with pseudoconsole object.
 HANDLE outputReadSide, inputWriteSide; // - Hold onto these and use them for communication with the child through the pseudoconsole.
 
-HRESULT SetupPseudoConsole(COORD size)
-{
+HRESULT SetupPseudoConsole(COORD size) {
     HRESULT hr = S_OK;
 
     // Create communication channels
@@ -127,7 +127,7 @@ struct {
 } kbdState =  {FALSE, FALSE, FALSE};
 
 
-void sillyterm_handle_kbd(HWND hwnd, WPARAM wParam, LPARAM lParam){
+void SillytermHandleKeyboard(HWND hwnd, WPARAM wParam, LPARAM lParam){
     // TODO:
     // OutputDebugStringA("Got keyboard input!\n");
 
@@ -190,15 +190,16 @@ void sillyterm_handle_kbd(HWND hwnd, WPARAM wParam, LPARAM lParam){
 
 }
 
-void sillyterm_handle_paint(HWND hwnd, WPARAM wParam, LPARAM lParam){
+void SillytermHandlePaint(HWND hwnd, WPARAM wParam, LPARAM lParam){
     // TODO: call renderer code from here
 }
 
-void sillyterm_handle_resize(HWND hwnd, WPARAM wParam, LPARAM lParam){
+void SillytermHandleResize(HWND hwnd, WPARAM wParam, LPARAM lParam){
     // TODO: resize pseudoconsole here
 }
 
-void sillyterm_run() {
+
+void SillytermRun() {
     MSG msg;
     while (GetMessage(&msg, NULL, 0, 0)) {
         TranslateMessage(&msg);
@@ -208,17 +209,34 @@ void sillyterm_run() {
             readerThreadData.signal = FALSE;
             OutputDebugStringA("Got signal at sillyterm_run() console output\n");
             // data available
-            OutputDebugStringA((LPCSTR) & readerThreadData.buffer);
-            OutputDebugStringA("\n");
+
+            // convert to wide chars for rendering
+            int charsNeeded = MultiByteToWideChar(CP_UTF8, 0, readerThreadData.buffer, (int)strlen(readerThreadData.buffer), NULL, 0);
+            wchar_t * buf = HeapAlloc(GetProcessHeap(), 0, charsNeeded * sizeof(wchar_t) );
+
+            MultiByteToWideChar(CP_UTF8, 0, readerThreadData.buffer, (int)strlen(readerThreadData.buffer), buf, charsNeeded);
+
+            TerminalWrite(buf, charsNeeded);
+
+            if(rendererActive)
+                RendererDraw();
+
+            HeapFree(GetProcessHeap(), 0, buf);
+
+            //OutputDebugStringA((LPCSTR) &readerThreadData.buffer);
+            //OutputDebugStringA("\n");
+
             ZeroMemory(&readerThreadData.buffer, sizeof(readerThreadData.buffer));
+            readerThreadData.sz=0;
         }
 
     }
 }
 
 
-HRESULT sillyterm_init() {
-    COORD coord = { 80, 32 };
+HRESULT SillytermInit(){
+
+    COORD coord = { terminalState.cols, terminalState.lines };
     SetupPseudoConsole(coord);
 
     readerThreadData.hFile = outputReadSide;
@@ -236,4 +254,5 @@ HRESULT sillyterm_init() {
     HANDLE readerThread =  CreateThread(NULL, 0, &ReaderThread, &readerThreadData, 0, NULL);
     HANDLE writerThread =  CreateThread(NULL, 0, &WriterThread, &writerThreadData, 0, NULL);
 
+    return S_OK;
 }

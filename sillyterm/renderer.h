@@ -1,11 +1,7 @@
 #pragma once
 
 #include "Windows.h"
-
-
-void CreateDeviceResources(HWND hwnd);
-void DestroyDeviceResources();
-
+#include "term.h"
 
 
 #ifdef __cplusplus
@@ -14,5 +10,12 @@ void DestroyDeviceResources();
 #define EXTERNC
 #endif
 
-EXTERNC void renderer_init(HWND);
+EXTERNC volatile BOOL rendererActive;
+EXTERNC volatile BOOL rendererActive;
+EXTERNC HRESULT CreateDeviceResources(HWND);
+EXTERNC void DestroyDeviceResources();
+
+EXTERNC void RendererDraw();
+EXTERNC void RendererInit(HWND);
+
 #undef EXTERNC

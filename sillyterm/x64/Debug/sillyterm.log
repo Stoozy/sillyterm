@@ -1,2 +1,11 @@
 ﻿  renderer.cc
+C:\Users\mahin\source\repos\sillyterm\sillyterm\renderer.cc(78,19): warning C4018: '<': signed/unsigned mismatch
+C:\Users\mahin\source\repos\sillyterm\sillyterm\renderer.cc(82,66): warning C4244: 'argument': conversion from 'int' to 'FLOAT', possible loss of data
+C:\Users\mahin\source\repos\sillyterm\sillyterm\renderer.cc(82,56): warning C4244: 'argument': conversion from 'int' to 'FLOAT', possible loss of data
+C:\Users\mahin\source\repos\sillyterm\sillyterm\renderer.cc(82,46): warning C4244: 'argument': conversion from 'int' to 'FLOAT', possible loss of data
+C:\Users\mahin\source\repos\sillyterm\sillyterm\renderer.cc(82,40): warning C4244: 'argument': conversion from 'int' to 'FLOAT', possible loss of data
+  term.cc
+C:\Users\mahin\source\repos\sillyterm\sillyterm\term.cc(45,32): warning C4244: '=': conversion from 'FLOAT' to 'volatile UINT32', possible loss of data
+C:\Users\mahin\source\repos\sillyterm\sillyterm\term.cc(46,34): warning C4244: '=': conversion from 'FLOAT' to 'volatile UINT32', possible loss of data
+  Generating Code...
   sillyterm.vcxproj -> C:\Users\mahin\source\repos\sillyterm\x64\Debug\sillyterm.exe

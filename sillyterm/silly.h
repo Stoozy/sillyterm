@@ -10,8 +10,8 @@
 typedef struct thread_data {
   HANDLE hFile;
   wchar_t buffer[BUFSIZE];
-  BOOL signal;
   DWORD sz;
+  BOOL signal;
 } ThreadData;
 
 
@@ -20,5 +20,11 @@ DWORD WINAPI WriterThread(LPVOID lparam);
 
 LRESULT CALLBACK WindowProcessMessages(HWND hwnd, UINT msg, WPARAM param, LPARAM lparam);
 
-HRESULT sillyterm_init();
-void sillyterm_run();
+// silly.c
+
+void SillytermHandleKeyboard(HWND hwnd, WPARAM wParam, LPARAM lParam);
+void SillytermHandlePaint(HWND hwnd, WPARAM wParam, LPARAM lParam);
+void SillytermHandleResize(HWND hwnd, WPARAM wParam, LPARAM lParam);
+
+HRESULT SillytermInit();
+void SillytermRun();

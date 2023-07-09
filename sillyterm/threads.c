@@ -34,7 +34,8 @@ DWORD WINAPI ReaderThread(LPVOID lparam){
           // TODO: deal with this
           if(ReadFile(threadData->hFile, &localBuf, BUFSIZE, &bytesRead, NULL)){
             if(bytesRead != 0){
-              memcpy(&threadData->buffer, &localBuf, bytesRead);
+              memcpy(&threadData->buffer[0], &localBuf[0], bytesRead);
+              threadData->sz = bytesRead;
               threadData->signal = TRUE; // data is available, signal to whoever is listening
             }
           }
@@ -43,6 +44,7 @@ DWORD WINAPI ReaderThread(LPVOID lparam){
         if(ReadFile(threadData->hFile, &localBuf, availableBytes, &bytesRead, NULL)){
           if(bytesRead != 0){
             memcpy(&threadData->buffer, &localBuf, bytesRead);
+            threadData->sz = bytesRead;
             threadData->signal = TRUE; // data is available, signal to whoever is listening
             OutputDebugStringA("Data read!\n");
           }

@@ -21,9 +21,24 @@
     <ClCompile Include="silly.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="threads.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="term.cc">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="renderer.cc">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="silly.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="renderer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="term.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

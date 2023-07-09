@@ -2,6 +2,7 @@
 #include <stdio.h>
 
 #include "silly.h"
+#include "renderer.h"
 
 RECT drawRect = { 0, 0, 800, 600 };
 
@@ -37,38 +38,38 @@ int WINAPI WinMain(HINSTANCE currentInstance, HINSTANCE previousInstance, PSTR c
 		exit(-1);
 	}
 
-	renderer_init(hwnd);
-	sillyterm_init();
-	sillyterm_run();
+    TerminalInit(hwnd);
+	RendererInit(hwnd);
+	SillytermInit();
+	SillytermRun();
 
 	return 0;
 }
 
 
-extern void sillyterm_handle_kbd(HWND hwnd, WPARAM wParam, LPARAM lParam);
 
 LRESULT CALLBACK WindowProcessMessages(HWND hwnd, UINT msg, WPARAM param, LPARAM lparam) {
 	switch (msg) {
 		case WM_CLOSE: {
-			if (MessageBox(hwnd, L"Really quit?", L"My application", MB_OKCANCEL) == IDOK)
+			if (MessageBox(hwnd, L"Really quit?", L"My application", MB_OKCANCEL) == IDOK){
 			    DestroyWindow(hwnd);
-			exit(-1);
+				exit(-1);
+			}
 			break;
 		}
 		// Keyboard input, passthrough
 		case WM_KEYDOWN:
 		case WM_KEYUP:
 		case WM_SYSKEYDOWN:
-		case WM_SYSKEYUP: sillyterm_handle_kbd(hwnd, param, lparam); break;
+		case WM_SYSKEYUP: SillytermHandleKeyboard(hwnd, param, lparam); break;
 
 		case WM_PAINT: {
 		    PAINTSTRUCT ps;
 		    HDC hdc = BeginPaint(hwnd, &ps);
 		    // All painting occurs here, between BeginPaint and EndPaint.
-			FillRect(hdc, &ps.rcPaint, (HBRUSH)CreateSolidBrush(RGB(0, 0, 0)));
-
-
+			// FillRect(hdc, &ps.rcPaint, (HBRUSH)CreateSolidBrush(RGB(0, 0, 0)));
 		    EndPaint(hwnd, &ps);
+			break;
 		}
 		default: return DefWindowProcA(hwnd, msg, param, lparam);
 	}
