@@ -135,14 +135,14 @@ void RendererInit(HWND hwnd){
 
 
     if (SUCCEEDED(hr)) {
-        hr = pDWriteFactory_->CreateTextFormat(L"SF Mono",                // Font family name.
-                                               NULL,                       // Font collection (NULL sets it to use the system font collection).
-                                               DWRITE_FONT_WEIGHT_REGULAR,
-                                               DWRITE_FONT_STYLE_NORMAL,
-                                               DWRITE_FONT_STRETCH_NORMAL,
-                                               16.0f,
-                                               L"en-us",
-                                               &pTextFormat_);
+      hr = pDWriteFactory_->CreateTextFormat(TEXT(FONT_NAME),
+					     NULL,
+					     DWRITE_FONT_WEIGHT_REGULAR,
+					     DWRITE_FONT_STYLE_NORMAL,
+					     DWRITE_FONT_STRETCH_NORMAL,
+					     FONT_SIZE,
+					     L"en-us",
+					     &pTextFormat_);
 
         // Center align (horizontally) the text.
         if (SUCCEEDED(hr)) hr = pTextFormat_->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_LEADING);

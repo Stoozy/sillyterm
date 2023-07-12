@@ -27,7 +27,19 @@ int WINAPI WinMain(HINSTANCE currentInstance, HINSTANCE previousInstance, PSTR c
 		exit(-1);
 	}
 	
-	HWND hwnd = CreateWindowEx(0, CLASS_NAME, WINDOW_NAME, WS_OVERLAPPEDWINDOW | WS_VISIBLE, CW_USEDEFAULT, CW_USEDEFAULT, 800, 600, NULL, NULL, wc.hInstance, NULL);
+	HWND hwnd = CreateWindowEx(0,
+				   CLASS_NAME,
+				   WINDOW_NAME,
+				   // remove ^ WS_THICKFRAME for resizable window
+				   WS_OVERLAPPEDWINDOW ^ WS_THICKFRAME,
+				   CW_USEDEFAULT,
+				   CW_USEDEFAULT,
+				   800,
+				   600,
+				   NULL,
+				   NULL,
+				   wc.hInstance,
+				   NULL);
 
 	if (hwnd) {
 		ShowWindow(hwnd, SW_SHOW);
@@ -38,7 +50,7 @@ int WINAPI WinMain(HINSTANCE currentInstance, HINSTANCE previousInstance, PSTR c
 		exit(-1);
 	}
 
-    TerminalInit(hwnd);
+	TerminalInit(hwnd);
 	RendererInit(hwnd);
 	SillytermInit();
 	SillytermRun();

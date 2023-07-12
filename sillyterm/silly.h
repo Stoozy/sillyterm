@@ -2,6 +2,11 @@
 #include "windows.h"
 
 
+#define FONT_SIZE 16.0f
+#define FONT_WIDTH 12
+#define FONT_HEIGHT 16
+#define FONT_NAME "SF Mono"
+
 #define BUFSIZE 1024
 #define CLASS_NAME TEXT("silly")
 #define WINDOW_NAME "SillyTerm"

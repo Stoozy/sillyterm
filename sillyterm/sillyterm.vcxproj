@@ -132,11 +132,13 @@
     <ClCompile Include="threads.c" />
     <ClCompile Include="term.cc" />
     <ClCompile Include="renderer.cc" />
+    <ClCompile Include="vt100.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="renderer.h" />
     <ClInclude Include="term.h" />
     <ClInclude Include="silly.h" />
+    <ClInclude Include="vt100.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

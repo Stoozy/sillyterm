@@ -1,4 +1,6 @@
+#include "silly.h"
 #include "term.h"
+#include "vt100.h"
 
 volatile TerminalState terminalState;
 
@@ -13,16 +15,10 @@ static void TerminalScreenInit(unsigned cols, unsigned lines){
   }
 }
 
+
 VOID TerminalWrite(const wchar_t * buf, UINT32 len){
     for(UINT32 i=0; i<len; i++){
-        if(terminalState.cx == terminalState.cols || buf[i] == '\n'){
-            terminalState.cx = 0;
-            terminalState.cy++;
-        }else{
-            terminalState.screen[terminalState.cy][terminalState.cx].bgColor = D2D1::ColorF(D2D1::ColorF::Blue);
-            terminalState.screen[terminalState.cy][terminalState.cx].fgColor = D2D1::ColorF(D2D1::ColorF::White);
-            terminalState.screen[terminalState.cy][terminalState.cx++].character = buf[i];
-        }
+      vt_handle_code((UINT32)buf[i]);
     }
 }
 
@@ -30,8 +26,8 @@ HRESULT TerminalInit(HWND hwnd){
 
   terminalState.cx =  terminalState.cy = 0;
 
-  terminalState.fontWidth = 13;
-  terminalState.fontHeight = 16;
+  terminalState.fontWidth = FONT_HEIGHT;
+  terminalState.fontHeight = FONT_WIDTH;
 
   RECT rc;
   GetClientRect(hwnd, &rc);
@@ -46,13 +42,6 @@ HRESULT TerminalInit(HWND hwnd){
   terminalState.lines = winHeight/terminalState.fontHeight;
 
   TerminalScreenInit(terminalState.cols, terminalState.lines);
-
-  // const char msg[256];
-  // sprintf_s( msg, 200, "TerminalInit(): %d columns \n\0", terminalState.cols);
-  // OutputDebugStringA(msg);
-
-  // sprintf_s( msg, 200, "TerminalInit(): %d lines \n\0", terminalState.lines);
-  // OutputDebugStringA(msg);
 
   return S_OK;
 }

@@ -30,6 +30,9 @@
     <ClCompile Include="renderer.cc">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="vt100.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="silly.h">
@@ -39,6 +42,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="term.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="vt100.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
