@@ -3,11 +3,12 @@
 
 
 typedef enum vt_states {
-
+  NIL,
   GROUND,
+  SOS_PM_APC_STRING,
   OSC_STRING,
   ESCAPE,
-  ESC_INTERMEDIATE,
+  ESCAPE_INTERMEDIATE,
   CSI_PARAM,
   CSI_IGNORE,
   CSI_ENTRY,
@@ -25,7 +26,7 @@ typedef enum vt_events {
 
   EXECUTE,
   PRINT,
-  IGN,
+  _IGNORE,
   CLEAR,
   COLLECT,
   PARAM,
@@ -42,27 +43,28 @@ typedef enum vt_events {
 
 
 typedef struct vt100 {
+  wchar_t code;
   VT_STATE state;
 } VT100;
 
 
-VT_STATE vt_execute_handler();
-VT_STATE vt_print_handler();
-VT_STATE vt_ignore_handler();
-VT_STATE vt_clear_handler();
+VT_STATE vt_execute_handler(void);
+VT_STATE vt_print_handler(void);
+VT_STATE vt_ignore_handler(void);
+VT_STATE vt_clear_handler(void);
 
-VT_STATE vt_hook_handler();
-VT_STATE vt_put_handler();
-VT_STATE vt_unhook_handler();
+VT_STATE vt_hook_handler(void);
+VT_STATE vt_put_handler(void);
+VT_STATE vt_unhook_handler(void);
 
-VT_STATE vt_osc_start_handler();
-VT_STATE vt_osc_put_handler();
-VT_STATE vt_osc_end_handler();
+VT_STATE vt_osc_start_handler(void);
+VT_STATE vt_osc_put_handler(void);
+VT_STATE vt_osc_end_handler(void);
 
-VT_STATE vt_param_handler();
-VT_STATE vt_collect_handler();
-VT_STATE vt_esc_dispatch_handler();
-VT_STATE vt_csi_dispatch_handler();
+VT_STATE vt_param_handler(void);
+VT_STATE vt_collect_handler(void);
+VT_STATE vt_esc_dispatch_handler(void);
+VT_STATE vt_csi_dispatch_handler(void);
 
 #ifdef __cplusplus
 extern "C" {

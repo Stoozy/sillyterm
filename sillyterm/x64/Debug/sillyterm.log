@@ -1,19 +1,16 @@
 ﻿  vt100.c
-C:\Users\mahin\source\repos\sillyterm\sillyterm\vt100.c(13): warning C4716: 'vt_execute_handler': must return a value
-C:\Users\mahin\source\repos\sillyterm\sillyterm\vt100.c(17): warning C4716: 'vt_print_handler': must return a value
-C:\Users\mahin\source\repos\sillyterm\sillyterm\vt100.c(29): warning C4716: 'vt_hook_handler': must return a value
-C:\Users\mahin\source\repos\sillyterm\sillyterm\vt100.c(21): warning C4716: 'vt_ignore_handler': must return a value
-C:\Users\mahin\source\repos\sillyterm\sillyterm\vt100.c(25): warning C4716: 'vt_clear_handler': must return a value
-C:\Users\mahin\source\repos\sillyterm\sillyterm\vt100.c(41): warning C4716: 'vt_osc_start_handler': must return a value
-C:\Users\mahin\source\repos\sillyterm\sillyterm\vt100.c(45): warning C4716: 'vt_osc_put_handler': must return a value
-C:\Users\mahin\source\repos\sillyterm\sillyterm\vt100.c(33): warning C4716: 'vt_put_handler': must return a value
-C:\Users\mahin\source\repos\sillyterm\sillyterm\vt100.c(37): warning C4716: 'vt_unhook_handler': must return a value
-C:\Users\mahin\source\repos\sillyterm\sillyterm\vt100.c(53): warning C4716: 'vt_param_handler': must return a value
-C:\Users\mahin\source\repos\sillyterm\sillyterm\vt100.c(49): warning C4716: 'vt_osc_end_handler': must return a value
-C:\Users\mahin\source\repos\sillyterm\sillyterm\vt100.c(61): warning C4716: 'vt_esc_dispatch_handler': must return a value
-C:\Users\mahin\source\repos\sillyterm\sillyterm\vt100.c(57): warning C4716: 'vt_collect_handler': must return a value
-C:\Users\mahin\source\repos\sillyterm\sillyterm\vt100.c(65): warning C4716: 'vt_csi_dispatch_handler': must return a value
-  term.cc
-C:\Users\mahin\source\repos\sillyterm\sillyterm\term.cc(41,32): warning C4244: '=': conversion from 'FLOAT' to 'volatile UINT32', possible loss of data
-C:\Users\mahin\source\repos\sillyterm\sillyterm\term.cc(42,34): warning C4244: '=': conversion from 'FLOAT' to 'volatile UINT32', possible loss of data
+C:\Users\mahin\source\repos\sillyterm\sillyterm\vt100.c(14): warning C4716: 'vt_execute_handler': must return a value
+C:\Users\mahin\source\repos\sillyterm\sillyterm\vt100.c(22): warning C4716: 'vt_ignore_handler': must return a value
+C:\Users\mahin\source\repos\sillyterm\sillyterm\vt100.c(26): warning C4716: 'vt_clear_handler': must return a value
+C:\Users\mahin\source\repos\sillyterm\sillyterm\vt100.c(18): warning C4716: 'vt_print_handler': must return a value
+C:\Users\mahin\source\repos\sillyterm\sillyterm\vt100.c(30): warning C4716: 'vt_hook_handler': must return a value
+C:\Users\mahin\source\repos\sillyterm\sillyterm\vt100.c(34): warning C4716: 'vt_put_handler': must return a value
+C:\Users\mahin\source\repos\sillyterm\sillyterm\vt100.c(38): warning C4716: 'vt_unhook_handler': must return a value
+C:\Users\mahin\source\repos\sillyterm\sillyterm\vt100.c(42): warning C4716: 'vt_osc_start_handler': must return a value
+C:\Users\mahin\source\repos\sillyterm\sillyterm\vt100.c(46): warning C4716: 'vt_osc_put_handler': must return a value
+C:\Users\mahin\source\repos\sillyterm\sillyterm\vt100.c(54): warning C4716: 'vt_param_handler': must return a value
+C:\Users\mahin\source\repos\sillyterm\sillyterm\vt100.c(50): warning C4716: 'vt_osc_end_handler': must return a value
+C:\Users\mahin\source\repos\sillyterm\sillyterm\vt100.c(58): warning C4716: 'vt_collect_handler': must return a value
+C:\Users\mahin\source\repos\sillyterm\sillyterm\vt100.c(66): warning C4716: 'vt_csi_dispatch_handler': must return a value
+C:\Users\mahin\source\repos\sillyterm\sillyterm\vt100.c(62): warning C4716: 'vt_esc_dispatch_handler': must return a value
   sillyterm.vcxproj -> C:\Users\mahin\source\repos\sillyterm\x64\Debug\sillyterm.exe
