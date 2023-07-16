@@ -71,6 +71,11 @@ HRESULT SetupPseudoConsole(COORD size) {
 
     HPCON hPC;
     hr = CreatePseudoConsole(size, inputReadSide, outputWriteSide, 0, &hPC);
+    if(FAILED(hr)){
+      OutputDebugStringA("Couldn't create ConPTY session.\n");
+      exit(-1);
+    }
+
     // PCWSTR childApplication = L"C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe";
     // PCWSTR childApplication = L"C:\\Program Files\\Git\\bin\\bash.exe";
     PCWSTR childApplication = L"C:\\windows\\system32\\cmd.exe";
@@ -118,7 +123,6 @@ HRESULT SetupPseudoConsole(COORD size) {
     return hr;
 }
 
-wchar_t buf[BUFSIZE];
 
 struct {
     BOOL shiftDown;
@@ -151,44 +155,75 @@ void SillytermHandleKeyboard(HWND hwnd, WPARAM wParam, LPARAM lParam){
     {
     case VK_CAPITAL: kbdState.caps = !kbdState.caps; break;
     case VK_SHIFT:   // converts to VK_LSHIFT or VK_RSHIFT
-        if(isKeyReleased) kbdState.shiftDown = FALSE;
-        else kbdState.shiftDown = TRUE;
-        break;
+      if(isKeyReleased) kbdState.shiftDown = FALSE;
+      else kbdState.shiftDown = TRUE;
+      break;
     case VK_CONTROL: // converts to VK_LCONTROL or VK_RCONTROL
-        if(isKeyReleased) kbdState.ctrlDown = FALSE;
-        else kbdState.ctrlDown = TRUE;
-        break;
+      if(isKeyReleased) kbdState.ctrlDown = FALSE;
+      else kbdState.ctrlDown = TRUE;
+      break;
     case VK_MENU:    // converts to VK_LMENU or VK_RMENU
-        if(isKeyReleased) kbdState.altDown = FALSE;
-        else kbdState.altDown = TRUE;
-        break;
+      if(isKeyReleased) kbdState.altDown = FALSE;
+      else kbdState.altDown = TRUE;
+      break;
+    case VK_BACK:{
+      if(isKeyReleased){
+	wchar_t DEL =  127;
+	CopyMemory(&writerThreadData.buffer[0], &DEL, sizeof(wchar_t));
+	writerThreadData.signal =  TRUE;
+	writerThreadData.sz =  sizeof(wchar_t);
+      }
+
+
+      break;
+    }
+    case VK_SPACE: {
+      if(isKeyReleased){
+
+	CopyMemory(&writerThreadData.buffer[0], " ", sizeof(wchar_t));
+	writerThreadData.signal =  TRUE;
+	writerThreadData.sz =  sizeof(wchar_t);
+      }
+
+      break;
+    }
     case VK_RETURN:{
-        const char * cmd = "echo Hello, World!\n";
-        strcpy_s(&writerThreadData.buffer, strlen(cmd)+1, cmd);
-        writerThreadData.sz = strlen(cmd);
-        writerThreadData.signal =  TRUE;
-        break;
+      if(isKeyReleased){
+	OutputDebugStringA("Pressed ENTER.\n");
+
+	size_t sz = 2 * sizeof(wchar_t);
+
+	CopyMemory(&writerThreadData.buffer[0], "\r\n", sz);
+	writerThreadData.signal =  TRUE;
+	writerThreadData.sz =  sz;
+      }
+      break;
     }
     default:{
-        // ascii chars
-        if(vkCode <= 0x5A && vkCode >= 0x41){
-            if(isKeyReleased)
-                return;
-            if(!kbdState.shiftDown && !kbdState.caps) vkCode += 0x20;
+      // ascii chars
+      if(vkCode <= 0x5A && vkCode >= 0x41){
+          if(isKeyReleased) return;
+          if(!kbdState.shiftDown && !kbdState.caps) vkCode += 0x20;
 
-            const char msg[256];
-            sprintf_s( msg, 200, "sillyterm_handle_kbd(): %c was pressed \n\0", vkCode);
-            OutputDebugStringA(msg);
-        }else{
-            const char msg[256];
-            sprintf_s( msg, 200, "sillyterm_handle_kbd(): Unhandled vkCode : 0x%x\n\0", vkCode);
-            OutputDebugStringA(msg);
-        }
+          const char msg[256];
+          sprintf_s( msg, 200, "SillytermHandleKbd(): %c was pressed \n\0", vkCode);
+          OutputDebugStringA(msg);
 
-        break;
+	  writerThreadData.buffer[0] = vkCode;
+	  writerThreadData.signal =  TRUE;
+	  writerThreadData.sz =  sizeof(wchar_t);
+      }else{
+          const char msg[256];
+          sprintf_s( msg, 200, "SillytermHandleKbd(): Unhandled vkCode : 0x%x\n\0", vkCode);
+          OutputDebugStringA(msg);
+      }
+
+      break;
     }
     }
 
+
+    RendererDraw();
 }
 
 void SillytermHandlePaint(HWND hwnd, WPARAM wParam, LPARAM lParam){
@@ -209,11 +244,13 @@ void SillytermRun() {
         if(readerThreadData.signal){
             readerThreadData.signal = FALSE;
             OutputDebugStringA("Got signal at sillyterm_run() console output\n");
+	    OutputDebugStringA(readerThreadData.buffer);
             // data available
 
             // convert to wide chars for rendering
             int charsNeeded = MultiByteToWideChar(CP_UTF8, 0, readerThreadData.buffer, (int)strlen(readerThreadData.buffer), NULL, 0);
-            wchar_t * buf = HeapAlloc(GetProcessHeap(), 0, charsNeeded * sizeof(wchar_t) );
+            wchar_t * buf = HeapAlloc(GetProcessHeap(), 0, charsNeeded * sizeof(wchar_t));
+	    ZeroMemory(buf, charsNeeded * sizeof(wchar_t) );
 
             MultiByteToWideChar(CP_UTF8, 0, readerThreadData.buffer, (int)strlen(readerThreadData.buffer), buf, charsNeeded);
 
@@ -229,6 +266,7 @@ void SillytermRun() {
 
             ZeroMemory(&readerThreadData.buffer, sizeof(readerThreadData.buffer));
             readerThreadData.sz=0;
+	    RendererDraw();
         }
 
     }

@@ -30,20 +30,33 @@ DWORD WINAPI ReaderThread(LPVOID lparam){
     // OutputDebugStringA("[ReaderThread] running!");
     if(PeekNamedPipe(threadData->hFile, NULL, NULL, NULL, &availableBytes, NULL)){
       if(availableBytes != 0){
+
+	const char msg[256];
+	sprintf_s( msg, 200, "ReaderThread(): %d bytes available.\n\0", availableBytes);
+	OutputDebugStringA(msg);
+
+
+        // TODO: deal with this
         if(availableBytes > BUFSIZE){
-          // TODO: deal with this
-          if(ReadFile(threadData->hFile, &localBuf, BUFSIZE, &bytesRead, NULL)){
-            if(bytesRead != 0){
-              memcpy(&threadData->buffer[0], &localBuf[0], bytesRead);
-              threadData->sz = bytesRead;
-              threadData->signal = TRUE; // data is available, signal to whoever is listening
-            }
-          }
+	  // if(ReadFile(threadData->hFile, &localBuf, BUFSIZE, &bytesRead, NULL)){
+          //   if(bytesRead != 0){
+	  //     sprintf_s( msg, 200, "ReaderThread(): %d bytes read.\n\0", bytesRead);
+	  //     OutputDebugStringA(msg);
+
+          //     memcpy(&threadData->buffer[0], &localBuf[0], bytesRead);
+          //     threadData->sz = bytesRead;
+          //     threadData->signal = TRUE; // data is available, signal to whoever is listening
+          //   }
+          // }
         }
 
         if(ReadFile(threadData->hFile, &localBuf, availableBytes, &bytesRead, NULL)){
           if(bytesRead != 0){
-            memcpy(&threadData->buffer, &localBuf, bytesRead);
+	    sprintf_s( msg, 200, "ReaderThread(): %d bytes read.\n\0", bytesRead);
+	    OutputDebugStringA(msg);
+
+
+            CopyMemory(&threadData->buffer, &localBuf, bytesRead);
             threadData->sz = bytesRead;
             threadData->signal = TRUE; // data is available, signal to whoever is listening
             OutputDebugStringA("Data read!\n");
@@ -51,7 +64,5 @@ DWORD WINAPI ReaderThread(LPVOID lparam){
         }
       }
     }
-
   }
-
 }

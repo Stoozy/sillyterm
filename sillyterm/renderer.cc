@@ -61,7 +61,7 @@ void DestroyDeviceResources() {
 
 
 void RendererDraw(){
-  OutputDebugStringA("RendererDraw(): called\n");
+  // OutputDebugStringA("RendererDraw(): called\n");
   RECT rc;
   GetClientRect(gHwnd, &rc);
 

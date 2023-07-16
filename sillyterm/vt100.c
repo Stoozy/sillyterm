@@ -11,13 +11,22 @@ BOOL inRange(UINT32 val, UINT32 lower, UINT32 upper){
 VT_STATE vt_execute_handler(){
   // TODO
   OutputDebugStringA("vt_execute_handler()\n");
+  if(vt.code == '\b'){
 
+    if(terminalState.cx-1 < 0){
+      terminalState.cy--;
+      terminalState.cx = terminalState.cols-1;
+    }else terminalState.cx--;
 
+    terminalState.screen[terminalState.cy][terminalState.cx].character = ' ';
+    return;
+  }
 }
 
 VT_STATE vt_print_handler(){
   // TODO
   OutputDebugStringA("vt_print_handler()\n");
+
   if(terminalState.cx >= terminalState.cols){
     terminalState.cx = 0;
     terminalState.cy++;
@@ -25,6 +34,7 @@ VT_STATE vt_print_handler(){
 
   if(terminalState.cx < terminalState.cols && terminalState.cy < terminalState.lines)
     terminalState.screen[terminalState.cy][terminalState.cx++].character = (wchar_t)vt.code;
+
 }
 
 VT_STATE vt_ignore_handler(){

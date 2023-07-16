@@ -6,9 +6,6 @@
 
 RECT drawRect = { 0, 0, 800, 600 };
 
-wchar_t kbdBuffer[BUFSIZE];
-
-
 int WINAPI WinMain(HINSTANCE currentInstance, HINSTANCE previousInstance, PSTR cmdline, INT cmdCount) {
 
 	WNDCLASSEX wc; ZeroMemory(&wc, sizeof(wc));
@@ -47,7 +44,7 @@ int WINAPI WinMain(HINSTANCE currentInstance, HINSTANCE previousInstance, PSTR c
 	}
 	else {
 		int err = GetLastError();
-		exit(-1);
+		MessageBox(NULL, L"Couldn't create window.", NULL, MB_OK);
 	}
 
 	RendererInit(hwnd);
