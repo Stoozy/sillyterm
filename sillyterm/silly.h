@@ -1,10 +1,10 @@
 #pragma once
 #include "windows.h"
 
+extern UINT32 CELL_WIDTH;
+extern UINT32 CELL_HEIGHT;
 
-#define FONT_SIZE 16.0f
-#define FONT_WIDTH 12
-#define FONT_HEIGHT 16
+#define FONT_SIZE 14.0f
 #define FONT_NAME "SF Mono"
 
 #define BUFSIZE 1024

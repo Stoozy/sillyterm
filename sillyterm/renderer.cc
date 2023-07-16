@@ -17,6 +17,7 @@ IDWriteTextFormat* pTextFormat_;
 ID2D1Factory* pD2DFactory_;
 ID2D1HwndRenderTarget* pRT;
 ID2D1SolidColorBrush* pWhiteBrush_;
+IDWriteTextLayout * pTextLayout_;
 
 template <class T> void SafeRelease(T **ppT) {
     if (*ppT)
@@ -68,35 +69,52 @@ void RendererDraw(){
   pRT->SetTransform(D2D1::IdentityMatrix());
   pRT->Clear(D2D1::ColorF(D2D1::ColorF::Black));
 
+
+  ID2D1SolidColorBrush * bgBrush;
+  ID2D1SolidColorBrush * fgBrush;
+
+
   for(UINT32 i=0; i<terminalState.lines; i++){
     UINT32 len = terminalState.cols;
 
-
-    ID2D1SolidColorBrush * bgBrush;
-    ID2D1SolidColorBrush * fgBrush;
-
     for(int j=0; j<len; j++){
         TerminalCharacter termChar = terminalState.screen[i][j];
-        int left =  12 * j;
-        int top =  18 * i;
-        D2D1_RECT_F cell = D2D1::RectF(left, top, left + 12, top + 18);
+        int left =  CELL_WIDTH * j;
+        int top =  CELL_HEIGHT * i;
+        D2D1_RECT_F cell = D2D1::RectF(left,
+				       top,
+				       left + CELL_WIDTH,
+				       top + CELL_HEIGHT);
 
+
+	HRESULT hr = pDWriteFactory_->CreateTextLayout(&termChar.character,
+						       1,
+						       pTextFormat_,
+						       CELL_WIDTH,
+						       CELL_HEIGHT,
+						       &pTextLayout_);
 
         // TODO: only do this when the next color is different
-        HRESULT hr = pRT->CreateSolidColorBrush(termChar.bgColor, &bgBrush );
+
+	hr = pRT->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::Black),
+					&bgBrush );
         if(FAILED(hr)){
             OutputDebugStringA("Couldn't create brush!\n'");
             exit(-1);
         }
+
+        pRT->FillRectangle(cell, bgBrush);
+
         hr = pRT->CreateSolidColorBrush(termChar.fgColor, &fgBrush );
         if(FAILED(hr)){
             OutputDebugStringA("Couldn't create brush!\n'");
             exit(-1);
         }
 
-
-        pRT->FillRectangle(cell, bgBrush);
-        pRT->DrawText(&termChar.character, 1, pTextFormat_, cell, fgBrush);
+	D2D1_POINT_2F origin = D2D1::Point2F(static_cast<FLOAT>(left),
+					     static_cast<FLOAT>(top));
+	pRT->DrawTextLayout(origin, pTextLayout_, pWhiteBrush_);
+        // pRT->DrawText(&termChar.character, 1, pTextFormat_, cell, pWhiteBrush_);
 
         SafeRelease(&bgBrush);
         SafeRelease(&fgBrush);
@@ -107,14 +125,14 @@ void RendererDraw(){
 
   // draw cursor
 
-  int left =  12 * terminalState.cx;
-  int top =  18 * terminalState.cy;
+  int left =  CELL_WIDTH * terminalState.cx;
+  int top =  CELL_HEIGHT * terminalState.cy;
 
   D2D1_RECT_F cursorRect = D2D1::RectF(
     static_cast<FLOAT>( left ),
     static_cast<FLOAT>( top ),
-    static_cast<FLOAT>( left + 12),
-    static_cast<FLOAT>( top + 18));
+    static_cast<FLOAT>( left + CELL_WIDTH),
+    static_cast<FLOAT>( top + CELL_HEIGHT));
 
   pRT->FillRectangle(cursorRect, pWhiteBrush_);
 

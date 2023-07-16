@@ -50,8 +50,8 @@ int WINAPI WinMain(HINSTANCE currentInstance, HINSTANCE previousInstance, PSTR c
 		exit(-1);
 	}
 
-	TerminalInit(hwnd);
 	RendererInit(hwnd);
+	TerminalInit(hwnd);
 	SillytermInit();
 	SillytermRun();
 

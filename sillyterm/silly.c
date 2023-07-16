@@ -71,7 +71,8 @@ HRESULT SetupPseudoConsole(COORD size) {
 
     HPCON hPC;
     hr = CreatePseudoConsole(size, inputReadSide, outputWriteSide, 0, &hPC);
-
+    // PCWSTR childApplication = L"C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe";
+    // PCWSTR childApplication = L"C:\\Program Files\\Git\\bin\\bash.exe";
     PCWSTR childApplication = L"C:\\windows\\system32\\cmd.exe";
 
     // Create mutable text string for CreateProcessW command line string.
@@ -106,7 +107,7 @@ HRESULT SetupPseudoConsole(COORD size) {
                         &pi))
     {
         HeapFree(GetProcessHeap(), 0, cmdLineMutable);
-        exit(-1);
+
         return HRESULT_FROM_WIN32(GetLastError());
     }
     else {
@@ -162,7 +163,7 @@ void SillytermHandleKeyboard(HWND hwnd, WPARAM wParam, LPARAM lParam){
         else kbdState.altDown = TRUE;
         break;
     case VK_RETURN:{
-        const char * cmd = "echo Hello, World!\r\n";
+        const char * cmd = "echo Hello, World!\n";
         strcpy_s(&writerThreadData.buffer, strlen(cmd)+1, cmd);
         writerThreadData.sz = strlen(cmd);
         writerThreadData.signal =  TRUE;
@@ -237,7 +238,7 @@ void SillytermRun() {
 HRESULT SillytermInit(){
 
     COORD coord = { terminalState.cols, terminalState.lines };
-    SetupPseudoConsole(coord);
+    HRESULT hr = SetupPseudoConsole(coord);
 
     readerThreadData.hFile = outputReadSide;
     ZeroMemory(&readerThreadData.buffer, sizeof(readerThreadData.buffer));
@@ -246,10 +247,10 @@ HRESULT SillytermInit(){
     writerThreadData.hFile = inputWriteSide;
     ZeroMemory(&writerThreadData.buffer, sizeof(writerThreadData.buffer));
 
-    const char * cmd = "echo Hello, World!\r\n";
-    strcpy_s(&writerThreadData.buffer, strlen(cmd)+1, cmd);
-    writerThreadData.sz = strlen(cmd);
-    writerThreadData.signal =  TRUE;
+    // const char * cmd = "echo Hello, World!\r\n";
+    // strcpy_s(&writerThreadData.buffer, strlen(cmd)+1, cmd);
+    // writerThreadData.sz = strlen(cmd);
+    // writerThreadData.signal =  TRUE;
 
     HANDLE readerThread =  CreateThread(NULL, 0, &ReaderThread, &readerThreadData, 0, NULL);
     HANDLE writerThread =  CreateThread(NULL, 0, &WriterThread, &writerThreadData, 0, NULL);

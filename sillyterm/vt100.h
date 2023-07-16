@@ -1,8 +1,10 @@
 #pragma once
+#include "term.h"
 #include "windows.h"
 
 
 typedef enum vt_states {
+
   NIL,
   GROUND,
   SOS_PM_APC_STRING,
@@ -42,9 +44,24 @@ typedef enum vt_events {
 } VT_EVENT;
 
 
+
+typedef struct param {
+  size_t cap;
+  size_t len;
+  wchar_t * buf;
+} VT_PARAM;
+
+#define MAX_INTERMEDIATE_CHARS 2
+#define MAX_PARAMS 16
+
 typedef struct vt100 {
+  wchar_t intermediate_chars[MAX_INTERMEDIATE_CHARS];
   wchar_t code;
+
+  VT_PARAM param_list[MAX_PARAMS];
   VT_STATE state;
+
+  UINT32 num_params;
 } VT100;
 
 
@@ -72,8 +89,12 @@ extern "C" {
 
 VOID vt_handle_code(UINT32 code);
 
+VOID vt_init(void);
+
+
 #ifdef __cplusplus
 }
 #endif
 
 extern VT100 vt;
+extern volatile TerminalState terminalState;

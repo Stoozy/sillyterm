@@ -1,68 +1,178 @@
 #include "vt100.h"
 #include "windows.h"
-
+#include <string.h>
 
 VT100 vt;
 
 BOOL inRange(UINT32 val, UINT32 lower, UINT32 upper){
     return val >= lower && val <= upper;
-
 }
 
 VT_STATE vt_execute_handler(){
-    // TODO
+  // TODO
+  OutputDebugStringA("vt_execute_handler()\n");
+
+
 }
 
 VT_STATE vt_print_handler(){
-    // TODO
+  // TODO
+  OutputDebugStringA("vt_print_handler()\n");
+  if(terminalState.cx >= terminalState.cols){
+    terminalState.cx = 0;
+    terminalState.cy++;
+  }
+
+  if(terminalState.cx < terminalState.cols && terminalState.cy < terminalState.lines)
+    terminalState.screen[terminalState.cy][terminalState.cx++].character = (wchar_t)vt.code;
 }
 
 VT_STATE vt_ignore_handler(){
-    // TODO
+  // TODO
+  OutputDebugStringA("vt_ignore_handler()\n");
 }
 
 VT_STATE vt_clear_handler(){
-    // TODO
+  // TODO
+  OutputDebugStringA("vt_clear_handler()\n");
+  for(int i=0; i<vt.num_params; i++){
+    ZeroMemory(vt.param_list[i].buf, sizeof(wchar_t) * vt.param_list[i].cap);
+    vt.param_list[i].len = 0;
+  }
+
+  vt.num_params = 0;
 }
 
 VT_STATE vt_hook_handler(){
-    // TODO
+  // TODO
+  OutputDebugStringA("vt_hook_handler()\n");
 }
 
 VT_STATE vt_put_handler(){
-    // TODO
+  // TODO
+  OutputDebugStringA("vt_put_handler()\n");
 }
 
 VT_STATE vt_unhook_handler(){
-    // TODO
+  // TODO
+  OutputDebugStringA("vt_unhook_handler()\n");
 }
 
 VT_STATE vt_osc_start_handler(){
-    // TODO
+  // TODO
+  OutputDebugStringA("vt_osc_start_handler()\n");
 }
 
 VT_STATE vt_osc_put_handler(){
-    // TODO
+  // TODO
+  OutputDebugStringA("vt_osc_put_handler()\n");
 }
 
 VT_STATE vt_osc_end_handler(){
-    // TODO
+  // TODO
+  OutputDebugStringA("vt_osc_end_handler()\n");
 }
 
 VT_STATE vt_param_handler(){
-    // TODO
+  // TODO
+  OutputDebugStringA("vt_param_handler()\n");
+
+  VT_PARAM * param = &vt.param_list[vt.num_params];
+
+  // move on to next param in case of ";"
+  if(vt.code == 0x3b){
+    vt.num_params++;
+    return NIL;
+  }
+
+  if(vt.num_params == 0)
+    vt.num_params = 1;
+
+  if(param->len ==  param->cap){
+    param->buf = HeapReAlloc(GetProcessHeap(),
+			    0,
+			    param->buf,
+			    2 * param->cap * sizeof(wchar_t));
+    param->cap *= 2;
+  }
+
+  if(param->buf){
+    param->buf[param->len++] = vt.code;
+    param->buf[param->len+1] = 0;
+  }
+  else{
+    OutputDebugStringA("Param buffer is null :c\n");
+    exit(-1);
+  }
+
+
+  wchar_t msg[2] = {vt.code, 0};
+  OutputDebugStringA(msg);
+  OutputDebugStringA("\n");
 }
 
 VT_STATE vt_collect_handler(){
-    // TODO
+  // TODO
+  OutputDebugStringA("vt_collect_handler()\n");
 }
 
 VT_STATE vt_esc_dispatch_handler(){
-    // TODO
+  // TODO
+  OutputDebugStringA("vt_esc_dispatch_handler()\n");
 }
 
 VT_STATE vt_csi_dispatch_handler(){
+
+  vt.num_params++;
+  // TODO
+  OutputDebugStringA("vt_csi_dispatch_handler()\n");
+  OutputDebugStringA("PARAM LIST: \n");
+  for(int i=0; i<vt.num_params; i++){
+    OutputDebugStringA(vt.param_list[i].buf);
+    OutputDebugStringA("\n");
+  }
+
+  wchar_t msg[2] = {vt.code, 0};
+  OutputDebugStringA("Final Character is : ");
+  OutputDebugStringA(msg);
+  OutputDebugStringA("\n");
+
+  switch(vt.code){
+  case 'J': {
+    int param = atoi(vt.param_list[0].buf);
+    // 0 erases from the current cursor position (inclusive) to the end of the line/display
+
+    // 1 erases from the beginning of the line/display up to
+    // and including the current cursor position
+
+    // 2 erases the entire line/display
+
+
     // TODO
+    switch(param){
+    case  0: break;
+    case  1: break;
+    case  2:{
+      int line = terminalState.cy;
+      for(int i=0; i < terminalState.cols; i++){
+	TerminalCharacter ** screen = terminalState.screen;
+	screen[terminalState.cy][i].character = ' ';
+      }
+      break;
+    }
+    }
+    break;
+  }
+  case 'H' : {
+    int y = atoi(vt.param_list[0].buf);
+    int x = atoi(vt.param_list[1].buf);
+
+    terminalState.cx = x;
+    terminalState.cy = y;
+
+    break;
+  }
+  }
 }
 
 
@@ -96,11 +206,36 @@ static VT_STATE handle_from_anywhere(UINT32 code){
   return NIL;
 }
 
+static VOID vt_print_state(VT_STATE state){
+  switch(state){
+  case NIL: OutputDebugStringA("NIL\n"); break;
+  case GROUND: OutputDebugStringA("GROUND\n"); break;
+  case SOS_PM_APC_STRING: OutputDebugStringA("SOS_PM_APC_STRING\n"); break;
+  case OSC_STRING: OutputDebugStringA("OSC_STRING\n"); break;
+  case ESCAPE: OutputDebugStringA("ESCAPE\n"); break;
+  case ESCAPE_INTERMEDIATE: OutputDebugStringA("ESCAPE_INTERMEDIATE\n"); break;
+  case CSI_PARAM: OutputDebugStringA("CSI_PARAM\n"); break;
+  case CSI_IGNORE: OutputDebugStringA("CSI_IGNORE\n"); break;
+  case CSI_ENTRY: OutputDebugStringA("CSI_ENTRY\n"); break;
+  case CSI_INTERMEDIATE: OutputDebugStringA("CSI_INTERMEDIATE\n"); break;
+  case DCS_ENTRY: OutputDebugStringA("DCS_ENTRY\n"); break;
+  case DCS_INTERMEDIATE: OutputDebugStringA("DCS_INTERMEDIATE\n"); break;
+  case DCS_IGNORE: OutputDebugStringA("DCS_IGNORE\n"); break;
+  case DCS_PARAM: OutputDebugStringA("DCS_PARAM\n"); break;
+  case DCS_PASSTHROUGH: OutputDebugStringA("DCS_PASSTHROUGH\n"); break;
+  }
+}
+
 VOID vt_handle_code(UINT32 code){
+  vt.code = code;
   VT_STATE oldState = vt.state;
 
+  vt_print_state(oldState);
+
   VT_STATE potentialState = handle_from_anywhere(code);
-  if(potentialState != NIL) vt.state = potentialState; return;
+  if(potentialState != NIL) {
+   vt.state = potentialState; return;
+  }
 
 
   switch(oldState){
@@ -305,7 +440,7 @@ VOID vt_handle_code(UINT32 code){
     if(inRange(code, 0x30, 0x3f)) vt.state = DCS_IGNORE;
     if(inRange(code, 0x40, 0x7e)){
       vt_hook_handler(); // entry
-      vt.state = DCS_PASTHROUGH;
+      vt.state = DCS_PASSTHROUGH;
     }
 
 
@@ -357,7 +492,22 @@ VOID vt_handle_code(UINT32 code){
     break;
   }
   default:
+    OutputDebugStringA("vt_handle_code(): Unknown code!\n");
     break;
+  }
+
+}
+
+VOID vt_init(){
+  ZeroMemory(&vt,sizeof(VT100));
+
+  // initialize param list
+  for(UINT32 i=0; i<MAX_PARAMS; i++){
+    vt.param_list[i].cap = 64;
+    vt.param_list[i].len = 0;
+    vt.param_list[i].buf = (wchar_t*)HeapAlloc(GetProcessHeap(),
+					       HEAP_ZERO_MEMORY,
+					       64 * sizeof(wchar_t));
   }
 
 }
