@@ -4,6 +4,9 @@
 extern UINT32 CELL_WIDTH;
 extern UINT32 CELL_HEIGHT;
 
+#define DEBUG_MODE
+
+
 #define FONT_SIZE 14.0f
 #define FONT_NAME "SF Mono"
 

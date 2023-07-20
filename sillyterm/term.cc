@@ -17,9 +17,14 @@ extern IDWriteFactory * pDWriteFactory_;
 
 static void TerminalScreenInit(unsigned cols, unsigned lines){
   terminalState.screen = (TerminalCharacter**)HeapAlloc(GetProcessHeap(), 0, sizeof(TerminalCharacter *) * lines);
+
   for(UINT32 i=0; i<lines; i++){
-    size_t sz = sizeof(TerminalCharacter )  * (cols + 1);
+    size_t sz = sizeof(TerminalCharacter)  * (cols + 1);
     terminalState.screen[i] = (TerminalCharacter*)HeapAlloc(GetProcessHeap(), 0, sz);
+    if(!terminalState.screen[i]){
+      MessageBox(NULL, L"Couldn't allocate screen", 0, MB_OK );
+      exit(-1);
+    }
 
     for(UINT32 j=0; j<cols; j++){
       terminalState.screen[i][j].fgColor = D2D1::ColorF(D2D1::ColorF::White);
@@ -29,20 +34,45 @@ static void TerminalScreenInit(unsigned cols, unsigned lines){
     ZeroMemory(terminalState.screen[i], sz);
     terminalState.screen[i][cols].character = 0; // null terminate line
   }
+
+  terminalState.cols = cols;
+  terminalState.lines = lines;
 }
+
+
+static void TerminalIncLine(){
+  if(terminalState.cy+1 < terminalState.lines){
+    terminalState.cy++;
+  }else{
+    // scroll buffer
+
+    // instead of copying the memory line by line, just
+    // rearrange the pointers to point to the next line;
+    // delete the first line and create a new allocation for the last line
+    HeapFree(GetProcessHeap(), 0, terminalState.screen[0]);
+
+    int i=0;
+    for(;i<terminalState.lines-1; i++)
+      terminalState.screen[i] =  terminalState.screen[i+1];
+
+    int cols = terminalState.cols;
+    size_t sz = sizeof(TerminalCharacter)  * (cols + 1);
+    terminalState.screen[i] = (TerminalCharacter*)HeapAlloc(GetProcessHeap(), 0, sz);
+    terminalState.screen[i][cols].character = 0; // null terminate line
+    ZeroMemory(terminalState.screen[i], sz);
+
+  }
+
+  terminalState.cx = 0;
+}
+
 
 
 VOID TerminalWrite(const wchar_t * buf, UINT32 len){
     for(UINT32 i=0; i<len; i++){
-      switch(buf[i]){
-      case '\r': break;
-      case '\n': {
-	terminalState.cx=0;
-	terminalState.cy++;
-	break;
-      }
-      default: vt_handle_code((UINT32)buf[i]); break;
-      }
+      if(buf[i] == '\n') TerminalIncLine();
+      else vt_handle_code((UINT32)buf[i]);
+
       // OutputDebugStringA((LPCSTR)&buf[i]);
       // OutputDebugStringA("\n");
     }
@@ -89,10 +119,10 @@ HRESULT TerminalInit(HWND hwnd){
   terminalState.fontWidth = CELL_WIDTH;
   terminalState.fontHeight = CELL_HEIGHT;
 
-  terminalState.cols = winWidth/terminalState.fontWidth;
-  terminalState.lines = winHeight/terminalState.fontHeight;
+  int cols = winWidth/terminalState.fontWidth;
+  int lines = winHeight/terminalState.fontHeight;
 
-  TerminalScreenInit(terminalState.cols, terminalState.lines);
+  TerminalScreenInit(cols, lines);
 
   return S_OK;
 }

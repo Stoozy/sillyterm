@@ -2,6 +2,7 @@
 #include "silly.h"
 #include "renderer.h"
 #include "term.h"
+#include <sys/timeb.h>
 
 extern wchar_t kbdBuffer[BUFSIZE];
 
@@ -236,40 +237,63 @@ void SillytermHandleResize(HWND hwnd, WPARAM wParam, LPARAM lParam){
 
 
 void SillytermRun() {
-    MSG msg;
-    while (GetMessage(&msg, NULL, 0, 0)) {
-        TranslateMessage(&msg);
-        DispatchMessageA(&msg);
 
-        if(readerThreadData.signal){
-            readerThreadData.signal = FALSE;
-            OutputDebugStringA("Got signal at sillyterm_run() console output\n");
-	    OutputDebugStringA(readerThreadData.buffer);
-            // data available
+  MSG msg;
 
-            // convert to wide chars for rendering
-            int charsNeeded = MultiByteToWideChar(CP_UTF8, 0, readerThreadData.buffer, (int)strlen(readerThreadData.buffer), NULL, 0);
-            wchar_t * buf = HeapAlloc(GetProcessHeap(), 0, charsNeeded * sizeof(wchar_t));
-	    ZeroMemory(buf, charsNeeded * sizeof(wchar_t) );
+  while(TRUE){
 
-            MultiByteToWideChar(CP_UTF8, 0, readerThreadData.buffer, (int)strlen(readerThreadData.buffer), buf, charsNeeded);
+#ifdef DEBUG_MODE
+    struct timeb start, end;
+    ftime(&start);
+#endif
 
-            TerminalWrite(buf, charsNeeded);
+    if(GetMessage(&msg, NULL, 0, 0)){
 
-            if(rendererActive)
-                RendererDraw();
+      TranslateMessage(&msg);
+      DispatchMessageA(&msg);
 
-            HeapFree(GetProcessHeap(), 0, buf);
+      if(readerThreadData.signal){
+	readerThreadData.signal = FALSE;
+	OutputDebugStringA("Got signal at sillyterm_run() console output\n");
+	OutputDebugStringA(readerThreadData.buffer);
+	// data available
 
-            //OutputDebugStringA((LPCSTR) &readerThreadData.buffer);
-            //OutputDebugStringA("\n");
+	// convert to wide chars for rendering
+	int charsNeeded = MultiByteToWideChar(CP_UTF8, 0, readerThreadData.buffer, (int)strlen(readerThreadData.buffer), NULL, 0);
+	wchar_t * buf = HeapAlloc(GetProcessHeap(), 0, charsNeeded * sizeof(wchar_t));
+	ZeroMemory(buf, charsNeeded * sizeof(wchar_t) );
 
-            ZeroMemory(&readerThreadData.buffer, sizeof(readerThreadData.buffer));
-            readerThreadData.sz=0;
-	    RendererDraw();
-        }
+	MultiByteToWideChar(CP_UTF8, 0, readerThreadData.buffer, (int)strlen(readerThreadData.buffer), buf, charsNeeded);
+
+	TerminalWrite(buf, charsNeeded);
+
+	HeapFree(GetProcessHeap(), 0, buf);
+
+	//OutputDebugStringA((LPCSTR) &readerThreadData.buffer);
+	//OutputDebugStringA("\n");
+
+	ZeroMemory(&readerThreadData.buffer, sizeof(readerThreadData.buffer));
+	readerThreadData.sz=0;
+      }
 
     }
+
+    RendererDraw();
+#ifdef DEBUG_MODE
+    ftime(&end);
+
+    FLOAT  ms_elapsed = (1000.0f * (end.time-start.time))
+      +  (end.millitm -start.millitm);
+
+    FLOAT fps = 1000.0f/ms_elapsed;
+    char buffer[256] = {0};
+    sprintf_s(buffer, 256, "SillyTerm | %.6f FPS", fps);
+
+    SetWindowText(msg.hwnd, buffer);
+
+#endif
+
+  }
 }
 
 

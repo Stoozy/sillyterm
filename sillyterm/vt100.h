@@ -45,12 +45,6 @@ typedef enum vt_events {
 
 
 
-typedef struct param {
-  size_t cap;
-  size_t len;
-  wchar_t * buf;
-} VT_PARAM;
-
 #define MAX_INTERMEDIATE_CHARS 2
 #define MAX_PARAMS 16
 
@@ -58,7 +52,10 @@ typedef struct vt100 {
   wchar_t intermediate_chars[MAX_INTERMEDIATE_CHARS];
   wchar_t code;
 
-  VT_PARAM param_list[MAX_PARAMS];
+  char * param_str;
+  UINT32 param_cap;
+  UINT32 param_len;
+
   VT_STATE state;
 
   UINT32 num_params;

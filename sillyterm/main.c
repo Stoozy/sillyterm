@@ -60,11 +60,9 @@ int WINAPI WinMain(HINSTANCE currentInstance, HINSTANCE previousInstance, PSTR c
 LRESULT CALLBACK WindowProcessMessages(HWND hwnd, UINT msg, WPARAM param, LPARAM lparam) {
 	switch (msg) {
 		case WM_CLOSE: {
-			if (MessageBox(hwnd, L"Really quit?", L"My application", MB_OKCANCEL) == IDOK){
-			    DestroyWindow(hwnd);
-				exit(-1);
-			}
-			break;
+		  DestroyWindow(hwnd);
+		  exit(0);
+		  break;
 		}
 		// Keyboard input, passthrough
 		case WM_KEYDOWN:

@@ -1,26 +1,10 @@
-﻿  vt100.c
-C:\Users\mahin\source\repos\sillyterm\sillyterm\vt100.c(22,5): warning C4033: 'vt_execute_handler' must return a value
-C:\Users\mahin\source\repos\sillyterm\sillyterm\vt100.c(50,17): warning C4018: '<': signed/unsigned mismatch
-C:\Users\mahin\source\repos\sillyterm\sillyterm\vt100.c(122,22): warning C4133: 'function': incompatible types - from 'wchar_t [2]' to 'LPCSTR'
-C:\Users\mahin\source\repos\sillyterm\sillyterm\vt100.c(142,17): warning C4018: '<': signed/unsigned mismatch
-C:\Users\mahin\source\repos\sillyterm\sillyterm\vt100.c(143,40): warning C4133: 'function': incompatible types - from 'wchar_t *' to 'LPCSTR'
-C:\Users\mahin\source\repos\sillyterm\sillyterm\vt100.c(149,22): warning C4133: 'function': incompatible types - from 'wchar_t [2]' to 'LPCSTR'
-C:\Users\mahin\source\repos\sillyterm\sillyterm\vt100.c(154,38): warning C4133: 'function': incompatible types - from 'wchar_t *' to 'const char *'
-C:\Users\mahin\source\repos\sillyterm\sillyterm\vt100.c(169,22): warning C4018: '<': signed/unsigned mismatch
-C:\Users\mahin\source\repos\sillyterm\sillyterm\vt100.c(179,34): warning C4133: 'function': incompatible types - from 'wchar_t *' to 'const char *'
-C:\Users\mahin\source\repos\sillyterm\sillyterm\vt100.c(180,34): warning C4133: 'function': incompatible types - from 'wchar_t *' to 'const char *'
-C:\Users\mahin\source\repos\sillyterm\sillyterm\vt100.c(66): warning C4716: 'vt_put_handler': must return a value
-C:\Users\mahin\source\repos\sillyterm\sillyterm\vt100.c(24): warning C4716: 'vt_execute_handler': must return a value
-C:\Users\mahin\source\repos\sillyterm\sillyterm\vt100.c(40): warning C4716: 'vt_print_handler': must return a value
-C:\Users\mahin\source\repos\sillyterm\sillyterm\vt100.c(45): warning C4716: 'vt_ignore_handler': must return a value
-C:\Users\mahin\source\repos\sillyterm\sillyterm\vt100.c(61): warning C4716: 'vt_hook_handler': must return a value
-C:\Users\mahin\source\repos\sillyterm\sillyterm\vt100.c(56): warning C4716: 'vt_clear_handler': must return a value
-C:\Users\mahin\source\repos\sillyterm\sillyterm\vt100.c(71): warning C4716: 'vt_unhook_handler': must return a value
-C:\Users\mahin\source\repos\sillyterm\sillyterm\vt100.c(76): warning C4716: 'vt_osc_start_handler': must return a value
-C:\Users\mahin\source\repos\sillyterm\sillyterm\vt100.c(86): warning C4716: 'vt_osc_end_handler': must return a value
-C:\Users\mahin\source\repos\sillyterm\sillyterm\vt100.c(81): warning C4716: 'vt_osc_put_handler': must return a value
-C:\Users\mahin\source\repos\sillyterm\sillyterm\vt100.c(129): warning C4716: 'vt_collect_handler': must return a value
-C:\Users\mahin\source\repos\sillyterm\sillyterm\vt100.c(134): warning C4716: 'vt_esc_dispatch_handler': must return a value
-C:\Users\mahin\source\repos\sillyterm\sillyterm\vt100.c(124): warning C4715: 'vt_param_handler': not all control paths return a value
-C:\Users\mahin\source\repos\sillyterm\sillyterm\vt100.c(188): warning C4716: 'vt_csi_dispatch_handler': must return a value
+﻿  silly.c
+C:\Users\mahin\source\repos\sillyterm\sillyterm\silly.c(199,25): warning C4267: '=': conversion from 'size_t' to 'DWORD', possible loss of data
+C:\Users\mahin\source\repos\sillyterm\sillyterm\silly.c(210,11): warning C4013: 'sprintf_s' undefined; assuming extern returning int
+C:\Users\mahin\source\repos\sillyterm\sillyterm\silly.c(258,37): warning C4133: 'function': incompatible types - from 'wchar_t [1024]' to 'LPCSTR'
+C:\Users\mahin\source\repos\sillyterm\sillyterm\silly.c(262,68): warning C4133: 'function': incompatible types - from 'wchar_t [1024]' to 'LPCCH'
+C:\Users\mahin\source\repos\sillyterm\sillyterm\silly.c(262,105): warning C4133: 'function': incompatible types - from 'wchar_t [1024]' to 'const char *'
+C:\Users\mahin\source\repos\sillyterm\sillyterm\silly.c(266,50): warning C4133: 'function': incompatible types - from 'wchar_t [1024]' to 'LPCCH'
+C:\Users\mahin\source\repos\sillyterm\sillyterm\silly.c(266,87): warning C4133: 'function': incompatible types - from 'wchar_t [1024]' to 'const char *'
+C:\Users\mahin\source\repos\sillyterm\sillyterm\silly.c(292,29): warning C4133: 'function': incompatible types - from 'char [256]' to 'LPCWSTR'
   sillyterm.vcxproj -> C:\Users\mahin\source\repos\sillyterm\x64\Debug\sillyterm.exe

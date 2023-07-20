@@ -15,7 +15,7 @@ VT_STATE vt_execute_handler(){
 
     if(terminalState.cx-1 < 0){
       terminalState.cy--;
-      terminalState.cx = terminalState.cols-1;
+      terminalState.cx = terminalState.cols-2;
     }else terminalState.cx--;
 
     terminalState.screen[terminalState.cy][terminalState.cx].character = ' ';
@@ -25,100 +25,81 @@ VT_STATE vt_execute_handler(){
 
 VT_STATE vt_print_handler(){
   // TODO
-  OutputDebugStringA("vt_print_handler()\n");
+  // OutputDebugStringA("vt_print_handler()\n");
 
   if(terminalState.cx >= terminalState.cols){
     terminalState.cx = 0;
-    terminalState.cy++;
+    if(terminalState.cy < terminalState.lines)
+	terminalState.cy++;
+    else{
+      OutputDebugStringA("Ran out of space. Need to scroll!");
+      exit(-1);
+    }
   }
+
 
   if(terminalState.cx < terminalState.cols && terminalState.cy < terminalState.lines)
     terminalState.screen[terminalState.cy][terminalState.cx++].character = (wchar_t)vt.code;
+
 
 }
 
 VT_STATE vt_ignore_handler(){
   // TODO
-  OutputDebugStringA("vt_ignore_handler()\n");
+  // OutputDebugStringA("vt_ignore_handler()\n");
 }
 
 VT_STATE vt_clear_handler(){
   // TODO
   OutputDebugStringA("vt_clear_handler()\n");
-  for(int i=0; i<vt.num_params; i++){
-    ZeroMemory(vt.param_list[i].buf, sizeof(wchar_t) * vt.param_list[i].cap);
-    vt.param_list[i].len = 0;
-  }
-
-  vt.num_params = 0;
+  ZeroMemory(vt.param_str, vt.param_cap);
+  vt.param_len = 0;
 }
 
 VT_STATE vt_hook_handler(){
   // TODO
-  OutputDebugStringA("vt_hook_handler()\n");
+  // OutputDebugStringA("vt_hook_handler()\n");
 }
 
 VT_STATE vt_put_handler(){
   // TODO
-  OutputDebugStringA("vt_put_handler()\n");
+  // OutputDebugStringA("vt_put_handler()\n");
 }
 
 VT_STATE vt_unhook_handler(){
   // TODO
-  OutputDebugStringA("vt_unhook_handler()\n");
+  // OutputDebugStringA("vt_unhook_handler()\n");
 }
 
 VT_STATE vt_osc_start_handler(){
   // TODO
-  OutputDebugStringA("vt_osc_start_handler()\n");
+  // OutputDebugStringA("vt_osc_start_handler()\n");
 }
 
 VT_STATE vt_osc_put_handler(){
   // TODO
-  OutputDebugStringA("vt_osc_put_handler()\n");
+  // OutputDebugStringA("vt_osc_put_handler()\n");
 }
 
 VT_STATE vt_osc_end_handler(){
   // TODO
-  OutputDebugStringA("vt_osc_end_handler()\n");
+  // OutputDebugStringA("vt_osc_end_handler()\n");
 }
 
 VT_STATE vt_param_handler(){
   // TODO
   OutputDebugStringA("vt_param_handler()\n");
 
-  VT_PARAM * param = &vt.param_list[vt.num_params];
-
-  // move on to next param in case of ";"
-  if(vt.code == 0x3b){
-    vt.num_params++;
-    return NIL;
-  }
-
-  if(vt.num_params == 0)
-    vt.num_params = 1;
-
-  if(param->len ==  param->cap){
-    param->buf = HeapReAlloc(GetProcessHeap(),
+  if(vt.param_len ==  vt.param_cap){
+    vt.param_str = HeapReAlloc(GetProcessHeap(),
 			    0,
-			    param->buf,
-			    2 * param->cap * sizeof(wchar_t));
-    param->cap *= 2;
+			    vt.param_str,
+			    2 * vt.param_cap);
+    vt.param_cap *= 2;
   }
 
-  if(param->buf){
-    param->buf[param->len++] = vt.code;
-    param->buf[param->len+1] = 0;
-  }
-  else{
-    OutputDebugStringA("Param buffer is null :c\n");
-    exit(-1);
-  }
-
-
-  wchar_t msg[2] = {vt.code, 0};
-  OutputDebugStringA(msg);
-  OutputDebugStringA("\n");
+  vt.param_str[vt.param_len++] = vt.code;
+  vt.param_str[vt.param_len+1] = '\0';
 }
 
 VT_STATE vt_collect_handler(){
@@ -131,54 +112,104 @@ VT_STATE vt_esc_dispatch_handler(){
   OutputDebugStringA("vt_esc_dispatch_handler()\n");
 }
 
+
+
 VT_STATE vt_csi_dispatch_handler(){
 
-  vt.num_params++;
   // TODO
   OutputDebugStringA("vt_csi_dispatch_handler()\n");
-  OutputDebugStringA("PARAM LIST: \n");
-  for(int i=0; i<vt.num_params; i++){
-    OutputDebugStringA(vt.param_list[i].buf);
-    OutputDebugStringA("\n");
-  }
+  OutputDebugStringA("PARAM STRING: ");
+  OutputDebugStringA(vt.param_str);
+  OutputDebugStringA("\n");
 
   wchar_t msg[2] = {vt.code, 0};
   OutputDebugStringA("Final Character is : ");
   OutputDebugStringA(msg);
   OutputDebugStringA("\n");
 
+  UINT32 params[MAX_PARAMS];
+  char * token = strtok(vt.param_str, ";");
+  // loop through the string to extract all other tokens
+
+  int param_i = 0;
+
+  OutputDebugStringA("PARAM LIST: \n");
+  while( token != NULL ) {
+    params[param_i++] = atoi(token);
+
+    OutputDebugStringA(token);
+    OutputDebugStringA("\n");
+    token = strtok(NULL, " ");
+  }
+
+  static int K_counter = 0;
   switch(vt.code){
-  case 'J': {
-    int param = atoi(vt.param_list[0].buf);
-    // 0 erases from the current cursor position (inclusive) to the end of the line/display
-
-    // 1 erases from the beginning of the line/display up to
-    // and including the current cursor position
-
-    // 2 erases the entire line/display
-
-
-    // TODO
-    switch(param){
-    case  0: break;
-    case  1: break;
-    case  2:{
+  case 'K':{
+    K_counter++;
+    if(param_i == 0) {
       int line = terminalState.cy;
-      for(int i=0; i < terminalState.cols; i++){
-	TerminalCharacter ** screen = terminalState.screen;
-	screen[terminalState.cy][i].character = ' ';
-      }
-      break;
-    }
+      for(int i=terminalState.cx; i<terminalState.cols; i++)
+	terminalState.screen[line][i].character = ' ';
     }
     break;
   }
-  case 'H' : {
-    int y = atoi(vt.param_list[0].buf);
-    int x = atoi(vt.param_list[1].buf);
+  case 'J': {
+    // int param = atoi(vt.param_list[0].buf);
+    // 0 erases from the current cursor position (inclusive) to the end of the display
 
-    terminalState.cx = x;
-    terminalState.cy = y;
+    // 1 erases from the beginning of the display up to
+    // and including the current cursor position
+
+    // 2 erases the entire display
+
+    UINT32 param = 0;
+
+    if(param_i == 0) break;
+    else  param = params[0];
+    // TODO
+    switch(param){
+      // case  0: break;
+
+    case  1: break;
+    case  2:{
+      // int line = terminalState.cy;
+      // for(int i=0; i < terminalState.cols; i++){
+      // 	TerminalCharacter ** screen = terminalState.screen;
+      // 	screen[terminalState.cy][i].character = ' ';
+      // }
+      break;
+    }
+      // default: {
+      //   // clear until end of current line
+      //   for(int i=terminalState.cx; i<terminalState.cols; i++)
+      // 	terminalState.screen[terminalState.cy][i].character = ' ';
+
+      //   for(int i=terminalState.cy; i<terminalState.lines; i++){
+      // 	for(int j=0; j<terminalState.cols; j++){
+      // 	  terminalState.screen[i][j].character = ' ';
+      // 	}
+      //   }
+
+
+      //   break;
+      // }
+    }
+
+    break;
+  }
+  case 'H' : {
+    if(param_i == 0){
+      terminalState.cx = terminalState.cy = 0;
+    }
+
+    if(param_i == 2){
+      UINT32 y = params[0];
+      UINT32 x = params[1];
+      if(y < terminalState.lines && x < terminalState.cols && x >=0 && y>=0){
+	terminalState.cx = x-1;
+	terminalState.cy = y-1;
+      }
+    }
 
     break;
   }
@@ -240,7 +271,7 @@ VOID vt_handle_code(UINT32 code){
   vt.code = code;
   VT_STATE oldState = vt.state;
 
-  vt_print_state(oldState);
+  // vt_print_state(oldState);
 
   VT_STATE potentialState = handle_from_anywhere(code);
   if(potentialState != NIL) {
@@ -511,13 +542,10 @@ VOID vt_handle_code(UINT32 code){
 VOID vt_init(){
   ZeroMemory(&vt,sizeof(VT100));
 
-  // initialize param list
-  for(UINT32 i=0; i<MAX_PARAMS; i++){
-    vt.param_list[i].cap = 64;
-    vt.param_list[i].len = 0;
-    vt.param_list[i].buf = (wchar_t*)HeapAlloc(GetProcessHeap(),
-					       HEAP_ZERO_MEMORY,
-					       64 * sizeof(wchar_t));
-  }
+  // initialize param_str
+
+  vt.param_cap = 64;
+  vt.param_len = 0;
+  vt.param_str = HeapAlloc(GetProcessHeap(), 0, vt.param_cap);
 
 }
