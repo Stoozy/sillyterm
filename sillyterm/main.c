@@ -61,7 +61,9 @@ LRESULT CALLBACK WindowProcessMessages(HWND hwnd, UINT msg, WPARAM param, LPARAM
 	switch (msg) {
 		case WM_CLOSE: {
 		  DestroyWindow(hwnd);
-		  exit(0);
+		  extern BOOL quit;
+		  quit = TRUE;
+		  // exit(0);
 		  break;
 		}
 		// Keyboard input, passthrough
@@ -71,14 +73,13 @@ LRESULT CALLBACK WindowProcessMessages(HWND hwnd, UINT msg, WPARAM param, LPARAM
 		case WM_SYSKEYUP: SillytermHandleKeyboard(hwnd, param, lparam); break;
 
 		case WM_PAINT: {
-		    PAINTSTRUCT ps;
-		    HDC hdc = BeginPaint(hwnd, &ps);
-		    // All painting occurs here, between BeginPaint and EndPaint.
-			// FillRect(hdc, &ps.rcPaint, (HBRUSH)CreateSolidBrush(RGB(0, 0, 0)));
-		    EndPaint(hwnd, &ps);
-			break;
+		  PAINTSTRUCT ps;
+		  HDC hdc = BeginPaint(hwnd, &ps);
+		    //// All painting occurs here, between BeginPaint and EndPaint.
+		    //	// FillRect(hdc, &ps.rcPaint, (HBRUSH)CreateSolidBrush(RGB(0, 0, 0)));
+		  EndPaint(hwnd, &ps);
+		  return 0;
 		}
-		default: return DefWindowProcA(hwnd, msg, param, lparam);
 	}
 
 	return DefWindowProcA(hwnd, msg, param, lparam);

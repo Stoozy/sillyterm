@@ -4,10 +4,9 @@
 #include "term.h"
 #include <sys/timeb.h>
 
-extern wchar_t kbdBuffer[BUFSIZE];
 
-ThreadData readerThreadData;
-ThreadData writerThreadData;
+HANDLE inputReadSide, outputWriteSide; // - Close these after CreateProcess of child application with pseudoconsole objectr.
+HANDLE outputReadSide, inputWriteSide; // - Hold onto these and use them for communication with the child through the pseudoconsole.
 
 
 HRESULT PrepareStartupInformation(HPCON hpc, STARTUPINFOEX* psi) {
@@ -51,10 +50,6 @@ HRESULT PrepareStartupInformation(HPCON hpc, STARTUPINFOEX* psi) {
 
     return S_OK;
 }
-
-
-HANDLE inputReadSide, outputWriteSide; // - Close these after CreateProcess of child application with pseudoconsole object.
-HANDLE outputReadSide, inputWriteSide; // - Hold onto these and use them for communication with the child through the pseudoconsole.
 
 HRESULT SetupPseudoConsole(COORD size) {
     HRESULT hr = S_OK;
@@ -133,6 +128,25 @@ struct {
 } kbdState =  {FALSE, FALSE, FALSE};
 
 
+
+static void SillytermWriteToPTY(wchar_t * data, int len){
+  size_t bytes = len * sizeof(wchar_t);
+  size_t bytesWritten =0;
+
+  WriteFile(inputWriteSide, data, bytes, &bytesWritten, 0);
+
+  extern BOOL quit;
+  if(bytesWritten != bytes){
+    OutputDebugStringA("Couldn't write to console\n");
+  }else{
+    const char msg[256] = {0};
+    sprintf_s(msg, 256, "SillytermWriteToPTY(): %d bytes were written\n\0", bytesWritten);
+    OutputDebugStringA(msg);
+  }
+
+
+}
+
 void SillytermHandleKeyboard(HWND hwnd, WPARAM wParam, LPARAM lParam){
     // TODO:
     // OutputDebugStringA("Got keyboard input!\n");
@@ -170,34 +184,22 @@ void SillytermHandleKeyboard(HWND hwnd, WPARAM wParam, LPARAM lParam){
     case VK_BACK:{
       if(isKeyReleased){
 	wchar_t DEL =  127;
-	CopyMemory(&writerThreadData.buffer[0], &DEL, sizeof(wchar_t));
-	writerThreadData.signal =  TRUE;
-	writerThreadData.sz =  sizeof(wchar_t);
+	SillytermWriteToPTY(&DEL, 1);
       }
 
 
       break;
     }
     case VK_SPACE: {
-      if(isKeyReleased){
-
-	CopyMemory(&writerThreadData.buffer[0], " ", sizeof(wchar_t));
-	writerThreadData.signal =  TRUE;
-	writerThreadData.sz =  sizeof(wchar_t);
-      }
+      if(!isKeyReleased)
+	SillytermWriteToPTY(L" ", 1);
 
       break;
     }
     case VK_RETURN:{
-      if(isKeyReleased){
-	OutputDebugStringA("Pressed ENTER.\n");
-
-	size_t sz = 2 * sizeof(wchar_t);
-
-	CopyMemory(&writerThreadData.buffer[0], "\r\n", sz);
-	writerThreadData.signal =  TRUE;
-	writerThreadData.sz =  sz;
-      }
+      OutputDebugStringA("Pressed ENTER.\n");
+      if(!isKeyReleased)
+	SillytermWriteToPTY(L"\r\n", 2);
       break;
     }
     default:{
@@ -210,9 +212,9 @@ void SillytermHandleKeyboard(HWND hwnd, WPARAM wParam, LPARAM lParam){
           sprintf_s( msg, 200, "SillytermHandleKbd(): %c was pressed \n\0", vkCode);
           OutputDebugStringA(msg);
 
-	  writerThreadData.buffer[0] = vkCode;
-	  writerThreadData.signal =  TRUE;
-	  writerThreadData.sz =  sizeof(wchar_t);
+	  wchar_t wc = vkCode;
+	  SillytermWriteToPTY(&wc, 1);
+
       }else{
           const char msg[256];
           sprintf_s( msg, 200, "SillytermHandleKbd(): Unhandled vkCode : 0x%x\n\0", vkCode);
@@ -222,9 +224,6 @@ void SillytermHandleKeyboard(HWND hwnd, WPARAM wParam, LPARAM lParam){
       break;
     }
     }
-
-
-    RendererDraw();
 }
 
 void SillytermHandlePaint(HWND hwnd, WPARAM wParam, LPARAM lParam){
@@ -236,64 +235,96 @@ void SillytermHandleResize(HWND hwnd, WPARAM wParam, LPARAM lParam){
 }
 
 
+BOOL quit = FALSE;
+
 void SillytermRun() {
 
   MSG msg;
 
-  while(TRUE){
-
 #ifdef DEBUG_MODE
-    struct timeb start, end;
+  struct timeb start, end;
+  int frames = 0;
+  FLOAT ms_elapsed = 0;
+#endif
+
+  wchar_t localBuf[BUFSIZE] = {0};
+  wchar_t rbuf[BUFSIZE] = {0};
+  DWORD availableBytes = 0;
+  DWORD bytesRead = 0;
+
+  while(!quit){
+#ifdef DEBUG_MODE
     ftime(&start);
 #endif
 
-    if(GetMessage(&msg, NULL, 0, 0)){
-
+    if(PeekMessageA(&msg, NULL, 0, 0, PM_REMOVE)){
       TranslateMessage(&msg);
       DispatchMessageA(&msg);
-
-      if(readerThreadData.signal){
-	readerThreadData.signal = FALSE;
-	OutputDebugStringA("Got signal at sillyterm_run() console output\n");
-	OutputDebugStringA(readerThreadData.buffer);
-	// data available
-
-	// convert to wide chars for rendering
-	int charsNeeded = MultiByteToWideChar(CP_UTF8, 0, readerThreadData.buffer, (int)strlen(readerThreadData.buffer), NULL, 0);
-	wchar_t * buf = HeapAlloc(GetProcessHeap(), 0, charsNeeded * sizeof(wchar_t));
-	ZeroMemory(buf, charsNeeded * sizeof(wchar_t) );
-
-	MultiByteToWideChar(CP_UTF8, 0, readerThreadData.buffer, (int)strlen(readerThreadData.buffer), buf, charsNeeded);
-
-	TerminalWrite(buf, charsNeeded);
-
-	HeapFree(GetProcessHeap(), 0, buf);
-
-	//OutputDebugStringA((LPCSTR) &readerThreadData.buffer);
-	//OutputDebugStringA("\n");
-
-	ZeroMemory(&readerThreadData.buffer, sizeof(readerThreadData.buffer));
-	readerThreadData.sz=0;
-      }
-
     }
 
+    if(PeekNamedPipe( outputReadSide, NULL, NULL, NULL, &availableBytes, NULL)){
+      if(availableBytes == 0) goto render;
+      const char msg[256];
+      sprintf_s( msg, 200, "%d bytes available.\n\0", availableBytes);
+      OutputDebugStringA(msg);
+
+
+      if(availableBytes >= BUFSIZE){
+	for(int i=0; i<=(availableBytes / BUFSIZE); i++){
+
+	  if(ReadFile(outputReadSide, &localBuf, BUFSIZE, &bytesRead, NULL) && bytesRead != 0){
+	    sprintf_s( msg, 200, "ReaderThread(): %d bytes read.\n\0", bytesRead);
+	    OutputDebugStringA(msg);
+
+	    int charsNeeded = MultiByteToWideChar(CP_UTF8, 0, localBuf, (int)strlen(localBuf), NULL, 0);
+	    MultiByteToWideChar(CP_UTF8, 0, localBuf, (int)strlen(localBuf), &rbuf, charsNeeded);
+	    TerminalWrite(rbuf, bytesRead);
+	    bytesRead = 0;
+	  }
+	}
+      }else{
+
+	if(ReadFile(outputReadSide, &localBuf, availableBytes, &bytesRead, NULL) && bytesRead != 0){
+	  sprintf_s( msg, 200, "ReaderThread(): %d bytes read.\n\0", bytesRead);
+	  OutputDebugStringA(msg);
+
+	  int charsNeeded = MultiByteToWideChar(CP_UTF8, 0, localBuf, (int)strlen(localBuf), NULL, 0);
+	  MultiByteToWideChar(CP_UTF8, 0, localBuf, (int)strlen(localBuf), &rbuf, charsNeeded);
+	  TerminalWrite(rbuf, bytesRead);
+	  bytesRead = 0;
+	}
+
+      }
+    }
+
+
+  render:
     RendererDraw();
+
 #ifdef DEBUG_MODE
     ftime(&end);
 
-    FLOAT  ms_elapsed = (1000.0f * (end.time-start.time))
-      +  (end.millitm -start.millitm);
+    ms_elapsed += (1000.0f * (end.time-start.time))
+      + (end.millitm -start.millitm);
 
-    FLOAT fps = 1000.0f/ms_elapsed;
-    char buffer[256] = {0};
-    sprintf_s(buffer, 256, "SillyTerm | %.6f FPS", fps);
+    if(ms_elapsed >= 1000.0f){
+      FLOAT fps = 1000.0f/ms_elapsed;
+      char buffer[256] = {0};
+      sprintf_s(buffer, 256, "SillyTerm | %d fps\n", frames);
+      OutputDebugStringA(buffer);
 
-    SetWindowText(msg.hwnd, buffer);
+      frames = 0;
+      ms_elapsed = 0;
+    }
 
+    frames++;
 #endif
 
   }
+
+
+
+  // TODO: cleanup
 }
 
 
@@ -301,21 +332,5 @@ HRESULT SillytermInit(){
 
     COORD coord = { terminalState.cols, terminalState.lines };
     HRESULT hr = SetupPseudoConsole(coord);
-
-    readerThreadData.hFile = outputReadSide;
-    ZeroMemory(&readerThreadData.buffer, sizeof(readerThreadData.buffer));
-    readerThreadData.signal = FALSE;
-
-    writerThreadData.hFile = inputWriteSide;
-    ZeroMemory(&writerThreadData.buffer, sizeof(writerThreadData.buffer));
-
-    // const char * cmd = "echo Hello, World!\r\n";
-    // strcpy_s(&writerThreadData.buffer, strlen(cmd)+1, cmd);
-    // writerThreadData.sz = strlen(cmd);
-    // writerThreadData.signal =  TRUE;
-
-    HANDLE readerThread =  CreateThread(NULL, 0, &ReaderThread, &readerThreadData, 0, NULL);
-    HANDLE writerThread =  CreateThread(NULL, 0, &WriterThread, &writerThreadData, 0, NULL);
-
     return S_OK;
 }

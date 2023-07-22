@@ -21,9 +21,6 @@
     <ClCompile Include="silly.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="threads.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="term.cc">
       <Filter>Source Files</Filter>
     </ClCompile>

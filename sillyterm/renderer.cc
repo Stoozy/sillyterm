@@ -19,6 +19,11 @@ ID2D1HwndRenderTarget* pRT;
 ID2D1SolidColorBrush* pWhiteBrush_;
 IDWriteTextLayout * pTextLayout_;
 
+ID2D1SolidColorBrush * bgBrush;
+ID2D1SolidColorBrush * fgBrush;
+
+
+
 template <class T> void SafeRelease(T **ppT) {
     if (*ppT)
     {
@@ -70,10 +75,6 @@ void RendererDraw(){
   pRT->Clear(D2D1::ColorF(D2D1::ColorF::Black));
 
 
-  ID2D1SolidColorBrush * bgBrush;
-  ID2D1SolidColorBrush * fgBrush;
-
-
   for(UINT32 i=0; i<terminalState.lines; i++){
     UINT32 len = terminalState.cols;
 
@@ -94,30 +95,17 @@ void RendererDraw(){
 						       CELL_HEIGHT,
 						       &pTextLayout_);
 
-        // TODO: only do this when the next color is different
-
-	hr = pRT->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::Black),
-					&bgBrush );
-        if(FAILED(hr)){
-            OutputDebugStringA("Couldn't create brush!\n'");
-            exit(-1);
-        }
-
-        pRT->FillRectangle(cell, bgBrush);
-
-        hr = pRT->CreateSolidColorBrush(termChar.fgColor, &fgBrush );
-        if(FAILED(hr)){
-            OutputDebugStringA("Couldn't create brush!\n'");
-            exit(-1);
-        }
-
 	D2D1_POINT_2F origin = D2D1::Point2F(static_cast<FLOAT>(left),
 					     static_cast<FLOAT>(top));
-	pRT->DrawTextLayout(origin, pTextLayout_, pWhiteBrush_);
+
+	// TODO: only do this when the next color is different
+	pRT->FillRectangle(cell, bgBrush);
+	pRT->DrawTextLayout(origin, pTextLayout_, fgBrush);
         // pRT->DrawText(&termChar.character, 1, pTextFormat_, cell, pWhiteBrush_);
 
-        SafeRelease(&bgBrush);
-        SafeRelease(&fgBrush);
+	SafeRelease(&pTextLayout_);
+        // SafeRelease(&bgBrush);
+        // SafeRelease(&fgBrush);
     }
 
     // OutputDebugStringA("RendererDraw(): Drew text!\n");
@@ -126,7 +114,7 @@ void RendererDraw(){
   // draw cursor
 
   int left =  CELL_WIDTH * terminalState.cx;
-  int top =  CELL_HEIGHT * terminalState.cy;
+  int top  =  CELL_HEIGHT * terminalState.cy;
 
   D2D1_RECT_F cursorRect = D2D1::RectF(
     static_cast<FLOAT>( left ),
@@ -173,6 +161,21 @@ void RendererInit(HWND hwnd){
 
   if(SUCCEEDED(hr))
     rendererActive = TRUE;
+
+  hr = pRT->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::Black),
+				  &bgBrush );
+  if(FAILED(hr)){
+    OutputDebugStringA("Couldn't create brush!\n'");
+    exit(-1);
+  }
+
+  hr = pRT->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::White), &fgBrush );
+  if(FAILED(hr)){
+    OutputDebugStringA("Couldn't create brush!\n'");
+    exit(-1);
+  }
+
+
 
   // DestroyDeviceResources();
   return;

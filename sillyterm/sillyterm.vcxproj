@@ -129,7 +129,6 @@
   <ItemGroup>
     <ClCompile Include="main.c" />
     <ClCompile Include="silly.c" />
-    <ClCompile Include="threads.c" />
     <ClCompile Include="term.cc" />
     <ClCompile Include="renderer.cc" />
     <ClCompile Include="vt100.c" />
