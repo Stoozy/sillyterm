@@ -8,6 +8,8 @@
 HANDLE inputReadSide, outputWriteSide; // - Close these after CreateProcess of child application with pseudoconsole objectr.
 HANDLE outputReadSide, inputWriteSide; // - Hold onto these and use them for communication with the child through the pseudoconsole.
 
+static BYTE keyboardState[256];
+
 
 HRESULT PrepareStartupInformation(HPCON hpc, STARTUPINFOEX* psi) {
     // Prepare Startup Information structure
@@ -203,24 +205,19 @@ void SillytermHandleKeyboard(HWND hwnd, WPARAM wParam, LPARAM lParam){
       break;
     }
     default:{
-      // ascii chars
-      if(vkCode <= 0x5A && vkCode >= 0x41){
-          if(isKeyReleased) return;
-          if(!kbdState.shiftDown && !kbdState.caps) vkCode += 0x20;
+      if(isKeyReleased)
+	return;
 
-          const char msg[256];
-          sprintf_s( msg, 200, "SillytermHandleKbd(): %c was pressed \n\0", vkCode);
-          OutputDebugStringA(msg);
+      GetKeyboardState(&keyboardState);
 
-	  wchar_t wc = vkCode;
-	  SillytermWriteToPTY(&wc, 1);
+      char buf[16] = {0};
+      int chars = ToAscii(vkCode, scanCode, &keyboardState, &buf, kbdState.altDown);
+      const char msg[256];
+      sprintf_s( msg, 200, "SillytermHandleKbd(): Received %c \0", buf[0]);
+      OutputDebugStringA(msg);
+      OutputDebugStringA("\n");
 
-      }else{
-          const char msg[256];
-          sprintf_s( msg, 200, "SillytermHandleKbd(): Unhandled vkCode : 0x%x\n\0", vkCode);
-          OutputDebugStringA(msg);
-      }
-
+      SillytermWriteToPTY(&buf, chars);
       break;
     }
     }
