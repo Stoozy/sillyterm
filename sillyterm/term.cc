@@ -4,8 +4,9 @@
 
 #include <d2d1.h>
 #include <Dwrite.h>
+#include <assert.h>
 
-volatile TerminalState terminalState;
+TSTATE ts;
 UINT32 CELL_WIDTH = 0;
 UINT32 CELL_HEIGHT = 0;
 
@@ -15,55 +16,54 @@ extern IDWriteFactory * pDWriteFactory_;
 
 
 
-static void TerminalScreenInit(unsigned cols, unsigned lines){
-  terminalState.screen = (TerminalCharacter**)HeapAlloc(GetProcessHeap(), 0, sizeof(TerminalCharacter *) * lines);
+static void TerminalScreenInit(unsigned cols, unsigned rows){
+  ts.cols = cols;
+  ts.rows = rows;
 
-  for(UINT32 i=0; i<lines; i++){
-    size_t sz = sizeof(TerminalCharacter)  * (cols + 1);
-    terminalState.screen[i] = (TerminalCharacter*)HeapAlloc(GetProcessHeap(), 0, sz);
-    if(!terminalState.screen[i]){
-      MessageBox(NULL, L"Couldn't allocate screen", 0, MB_OK );
-      exit(-1);
+
+  ts.lines = (TLINE*)HeapAlloc(GetProcessHeap(), 0, sizeof(TLINE) * rows);
+  assert(ts.lines != NULL);
+
+  for(int i=0; i<rows; i++){
+    ts.lines[i].cells = (TCELL*)HeapAlloc(GetProcessHeap(), 0, sizeof(TCELL) * cols);
+    ZeroMemory(ts.lines[i].cells,  sizeof(TCELL) * cols);
+    assert(ts.lines[i].cells != NULL);
+
+    TCELL * cells = ts.lines[i].cells;
+    for(int j=0; j<cols; j++){
+      cells[j].fgColor = D2D1::ColorF(D2D1::ColorF::White);
+      cells[j].bgColor = D2D1::ColorF(D2D1::ColorF::Blue);
     }
 
-    for(UINT32 j=0; j<cols; j++){
-      terminalState.screen[i][j].fgColor = D2D1::ColorF(D2D1::ColorF::White);
-      terminalState.screen[i][j].bgColor = D2D1::ColorF(D2D1::ColorF::Blue);
-    }
-
-    ZeroMemory(terminalState.screen[i], sz);
-    terminalState.screen[i][cols].character = 0; // null terminate line
+    ts.lines[i].dirty = TRUE;
   }
-
-  terminalState.cols = cols;
-  terminalState.lines = lines;
 }
 
 
 static void TerminalIncLine(){
-  if(terminalState.cy+1 < terminalState.lines){
-    terminalState.cy++;
+  if(ts.cy+1 < ts.rows){
+    ts.cy++;
   }else{
     // scroll buffer
 
     // instead of copying the memory line by line, just
     // rearrange the pointers to point to the next line;
     // delete the first line and create a new allocation for the last line
-    HeapFree(GetProcessHeap(), 0, terminalState.screen[0]);
+    HeapFree(GetProcessHeap(), 0, ts.lines[0].cells);
 
     int i=0;
-    for(;i<terminalState.lines-1; i++)
-      terminalState.screen[i] =  terminalState.screen[i+1];
+    for(;i<ts.rows-1; i++){
+      ts.lines[i].cells =  ts.lines[i+1].cells;
+      ts.lines[i].dirty = TRUE;
+    }
 
-    int cols = terminalState.cols;
-    size_t sz = sizeof(TerminalCharacter)  * (cols + 1);
-    terminalState.screen[i] = (TerminalCharacter*)HeapAlloc(GetProcessHeap(), 0, sz);
-    terminalState.screen[i][cols].character = 0; // null terminate line
-    ZeroMemory(terminalState.screen[i], sz);
+    size_t sz = sizeof(TCELL)  * ts.cols;
+    ts.lines[i].cells = (TCELL*)HeapAlloc(GetProcessHeap(), 0, sz);
+    ZeroMemory(ts.lines[i].cells, sz);
 
   }
 
-  terminalState.cx = 0;
+  ts.cx = 0;
 }
 
 
@@ -105,7 +105,7 @@ HRESULT TerminalInit(HWND hwnd){
   vt_init();
 
 
-  terminalState.cx = terminalState.cy = 0;
+  ts.cx = ts.cy = 0;
 
 
   RECT rc;
@@ -116,13 +116,13 @@ HRESULT TerminalInit(HWND hwnd){
   int winWidth = rc.right-rc.left;
   int winHeight = rc.bottom-rc.top;
 
-  terminalState.fontWidth = CELL_WIDTH;
-  terminalState.fontHeight = CELL_HEIGHT;
+  ts.fontWidth = CELL_WIDTH;
+  ts.fontHeight = CELL_HEIGHT;
 
-  int cols = winWidth/terminalState.fontWidth;
-  int lines = winHeight/terminalState.fontHeight;
+  int cols = winWidth/ts.fontWidth;
+  int rows = winHeight/ts.fontHeight;
 
-  TerminalScreenInit(cols, lines);
+  TerminalScreenInit(cols, rows);
 
   return S_OK;
 }

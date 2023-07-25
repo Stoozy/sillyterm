@@ -13,12 +13,13 @@ VT_STATE vt_execute_handler(){
   OutputDebugStringA("vt_execute_handler()\n");
   if(vt.code == '\b'){
 
-    if(terminalState.cx-1 < 0){
-      terminalState.cy--;
-      terminalState.cx = terminalState.cols-2;
-    }else terminalState.cx--;
+    if(ts.cx-1 < 0){
+      ts.cy--;
+      ts.cx = ts.cols-2;
+    }else ts.cx--;
 
-    terminalState.screen[terminalState.cy][terminalState.cx].character = ' ';
+    ts.lines[ts.cy].cells[ts.cx].character = ' ';
+    ts.lines[ts.cy].dirty = TRUE;
     return;
   }
 }
@@ -27,10 +28,10 @@ VT_STATE vt_print_handler(){
   // TODO
   // OutputDebugStringA("vt_print_handler()\n");
 
-  if(terminalState.cx >= terminalState.cols){
-    terminalState.cx = 0;
-    if(terminalState.cy < terminalState.lines)
-	terminalState.cy++;
+  if(ts.cx >= ts.cols){
+    ts.cx = 0;
+    if(ts.cy < ts.rows)
+	ts.cy++;
     else{
       OutputDebugStringA("Ran out of space. Need to scroll!");
       exit(-1);
@@ -38,10 +39,10 @@ VT_STATE vt_print_handler(){
   }
 
 
-  if(terminalState.cx < terminalState.cols && terminalState.cy < terminalState.lines)
-    terminalState.screen[terminalState.cy][terminalState.cx++].character = (wchar_t)vt.code;
-
-
+  if(ts.cx < ts.cols && ts.cy < ts.rows){
+    ts.lines[ts.cy].cells[ts.cx++].character = (wchar_t)vt.code;
+    ts.lines[ts.cy].dirty = TRUE;
+  }
 }
 
 VT_STATE vt_ignore_handler(){
@@ -147,9 +148,9 @@ VT_STATE vt_csi_dispatch_handler(){
   case 'K':{
     K_counter++;
     if(param_i == 0) {
-      int line = terminalState.cy;
-      for(int i=terminalState.cx; i<terminalState.cols; i++)
-	terminalState.screen[line][i].character = ' ';
+      int line = ts.cy;
+      for(int i=ts.cx; i<ts.cols; i++)
+	ts.lines[line].cells[i].character = ' ';
     }
     break;
   }
@@ -172,21 +173,21 @@ VT_STATE vt_csi_dispatch_handler(){
 
     case  1: break;
     case  2:{
-      // int line = terminalState.cy;
-      // for(int i=0; i < terminalState.cols; i++){
-      // 	TerminalCharacter ** screen = terminalState.screen;
-      // 	screen[terminalState.cy][i].character = ' ';
+      // int line = ts.cy;
+      // for(int i=0; i < ts.cols; i++){
+      // 	TerminalCharacter ** screen = ts.screen;
+      // 	screen[ts.cy][i].character = ' ';
       // }
       break;
     }
       // default: {
       //   // clear until end of current line
-      //   for(int i=terminalState.cx; i<terminalState.cols; i++)
-      // 	terminalState.screen[terminalState.cy][i].character = ' ';
+      //   for(int i=ts.cx; i<ts.cols; i++)
+      // 	ts.screen[ts.cy][i].character = ' ';
 
-      //   for(int i=terminalState.cy; i<terminalState.lines; i++){
-      // 	for(int j=0; j<terminalState.cols; j++){
-      // 	  terminalState.screen[i][j].character = ' ';
+      //   for(int i=ts.cy; i<ts.lines; i++){
+      // 	for(int j=0; j<ts.cols; j++){
+      // 	  ts.screen[i][j].character = ' ';
       // 	}
       //   }
 
@@ -199,15 +200,15 @@ VT_STATE vt_csi_dispatch_handler(){
   }
   case 'H' : {
     if(param_i == 0){
-      terminalState.cx = terminalState.cy = 0;
+      ts.cx = ts.cy = 0;
     }
 
     if(param_i == 2){
       UINT32 y = params[0];
       UINT32 x = params[1];
-      if(y < terminalState.lines && x < terminalState.cols && x >=0 && y>=0){
-	terminalState.cx = x-1;
-	terminalState.cy = y-1;
+      if(y < ts.rows && x < ts.cols && x >=0 && y>=0){
+	ts.cx = x-1;
+	ts.cy = y-1;
       }
     }
 

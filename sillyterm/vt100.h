@@ -94,4 +94,3 @@ VOID vt_init(void);
 #endif
 
 extern VT100 vt;
-extern volatile TerminalState terminalState;

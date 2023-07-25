@@ -42,18 +42,26 @@ HRESULT CreateDeviceResources(HWND hwnd_){
 
   if (!pRT){
       // Create a Direct2D render target.
-      hr = pD2DFactory_->CreateHwndRenderTarget(D2D1::RenderTargetProperties(),
-                                                D2D1::HwndRenderTargetProperties(hwnd_, size),
-                                                &pRT);
-      // Create a black brush.
-      if (SUCCEEDED(hr))
-          hr = pRT->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::White),
-                                           &pWhiteBrush_);
-      else {
-        OutputDebugStringA("CreateDeviceResources(): failed creating direct2d render target");
-        DWORD x = GetLastError();
-        hr = E_FAIL;
-      }
+
+
+    D2D1_RENDER_TARGET_PROPERTIES rtp = D2D1::RenderTargetProperties();
+    rtp.type = D2D1_RENDER_TARGET_TYPE_HARDWARE;
+    D2D1_HWND_RENDER_TARGET_PROPERTIES hrtp = D2D1::HwndRenderTargetProperties(hwnd_, size);
+    hrtp.presentOptions |= D2D1_PRESENT_OPTIONS_IMMEDIATELY;
+
+    hr = pD2DFactory_->CreateHwndRenderTarget(rtp,
+					      hrtp,
+					      &pRT);
+
+    // Create a black brush.
+    if (SUCCEEDED(hr))
+      hr = pRT->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::White),
+				      &pWhiteBrush_);
+    else {
+      OutputDebugStringA("CreateDeviceResources(): failed creating direct2d render target");
+      DWORD x = GetLastError();
+      hr = E_FAIL;
+    }
   }
 
   return hr;
@@ -65,6 +73,7 @@ void DestroyDeviceResources() {
 }
 
 
+static BOOL prevFrameUpdated = FALSE;
 void RendererDraw(){
   // OutputDebugStringA("RendererDraw(): called\n");
   RECT rc;
@@ -72,56 +81,64 @@ void RendererDraw(){
 
   pRT->BeginDraw();
   pRT->SetTransform(D2D1::IdentityMatrix());
-  pRT->Clear(D2D1::ColorF(D2D1::ColorF::Black));
+
+  if(prevFrameUpdated)
+    pRT->Clear(D2D1::ColorF(D2D1::ColorF::Black));
+
+  int update_count = 0;
+  for(UINT32 i=0; i<ts.rows; i++){
+
+    if(!ts.lines[i].dirty) continue;
+
+    update_count++;
+    prevFrameUpdated = TRUE;
+
+    for(int j=0; j<ts.cols; j++){
+      TCELL cell = ts.lines[i].cells[j];
+      int left =  CELL_WIDTH * j;
+      int top =  CELL_HEIGHT * i;
+      D2D1_RECT_F cellRect = D2D1::RectF(left,
+					 top,
+					 left + CELL_WIDTH,
+					 top + CELL_HEIGHT);
 
 
-  for(UINT32 i=0; i<terminalState.lines; i++){
-    UINT32 len = terminalState.cols;
+      HRESULT hr = pDWriteFactory_->CreateTextLayout(&cell.character,
+						     1,
+						     pTextFormat_,
+						     CELL_WIDTH,
+						     CELL_HEIGHT,
+						     &pTextLayout_);
 
-    for(int j=0; j<len; j++){
-        TerminalCharacter termChar = terminalState.screen[i][j];
-        int left =  CELL_WIDTH * j;
-        int top =  CELL_HEIGHT * i;
-        D2D1_RECT_F cell = D2D1::RectF(left,
-				       top,
-				       left + CELL_WIDTH,
-				       top + CELL_HEIGHT);
+      D2D1_POINT_2F origin = D2D1::Point2F(static_cast<FLOAT>(left),
+					   static_cast<FLOAT>(top));
 
+      pRT->FillRectangle(cellRect, bgBrush);
+      pRT->DrawTextLayout(origin, pTextLayout_, fgBrush);
+      // pRT->DrawText(&termChar.character, 1, pTextFormat_, cell, pWhiteBrush_);
 
-	HRESULT hr = pDWriteFactory_->CreateTextLayout(&termChar.character,
-						       1,
-						       pTextFormat_,
-						       CELL_WIDTH,
-						       CELL_HEIGHT,
-						       &pTextLayout_);
-
-	D2D1_POINT_2F origin = D2D1::Point2F(static_cast<FLOAT>(left),
-					     static_cast<FLOAT>(top));
-
-	// TODO: only do this when the next color is different
-	pRT->FillRectangle(cell, bgBrush);
-	pRT->DrawTextLayout(origin, pTextLayout_, fgBrush);
-        // pRT->DrawText(&termChar.character, 1, pTextFormat_, cell, pWhiteBrush_);
-
-	SafeRelease(&pTextLayout_);
-        // SafeRelease(&bgBrush);
-        // SafeRelease(&fgBrush);
+      SafeRelease(&pTextLayout_);
+      // SafeRelease(&bgBrush);
+      // SafeRelease(&fgBrush);
     }
 
+    //ts.lines[i].dirty = FALSE;
     // OutputDebugStringA("RendererDraw(): Drew text!\n");
   }
 
+  if(update_count == 0 )
+    prevFrameUpdated = FALSE;
+
   // draw cursor
 
-  int left =  CELL_WIDTH * terminalState.cx;
-  int top  =  CELL_HEIGHT * terminalState.cy;
+  int left =  CELL_WIDTH * ts.cx;
+  int top  =  CELL_HEIGHT * ts.cy;
 
   D2D1_RECT_F cursorRect = D2D1::RectF(
     static_cast<FLOAT>( left ),
     static_cast<FLOAT>( top ),
     static_cast<FLOAT>( left + CELL_WIDTH),
-    static_cast<FLOAT>( top + CELL_HEIGHT));
-
+      static_cast<FLOAT>( top + CELL_HEIGHT));
   pRT->FillRectangle(cursorRect, pWhiteBrush_);
 
 
@@ -169,7 +186,8 @@ void RendererInit(HWND hwnd){
     exit(-1);
   }
 
-  hr = pRT->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::White), &fgBrush );
+  hr = pRT->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::White),
+				  &fgBrush );
   if(FAILED(hr)){
     OutputDebugStringA("Couldn't create brush!\n'");
     exit(-1);

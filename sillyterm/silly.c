@@ -110,6 +110,7 @@ HRESULT SetupPseudoConsole(COORD size) {
                         &pi))
     {
         HeapFree(GetProcessHeap(), 0, cmdLineMutable);
+	exit(-1);
 
         return HRESULT_FROM_WIN32(GetLastError());
     }
@@ -145,7 +146,6 @@ static void SillytermWriteToPTY(wchar_t * data, int len){
     sprintf_s(msg, 256, "SillytermWriteToPTY(): %d bytes were written\n\0", bytesWritten);
     OutputDebugStringA(msg);
   }
-
 
 }
 
@@ -305,9 +305,9 @@ void SillytermRun() {
       + (end.millitm -start.millitm);
 
     if(ms_elapsed >= 1000.0f){
-      FLOAT fps = 1000.0f/ms_elapsed;
+      // ~ a second has passed
       char buffer[256] = {0};
-      sprintf_s(buffer, 256, "SillyTerm | %d fps\n", frames);
+      sprintf_s(buffer, 256, "fps: %d \n", frames);
       OutputDebugStringA(buffer);
 
       frames = 0;
@@ -327,7 +327,7 @@ void SillytermRun() {
 
 HRESULT SillytermInit(){
 
-    COORD coord = { terminalState.cols, terminalState.lines };
+    COORD coord = { ts.cols, ts.rows };
     HRESULT hr = SetupPseudoConsole(coord);
     return S_OK;
 }
