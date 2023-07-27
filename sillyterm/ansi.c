@@ -1,5 +1,7 @@
-#include "vt100.h"
+#include "ansi.h"
 #include "windows.h"
+#include "term.h"
+#include "renderer.h"
 #include <string.h>
 
 VT100 vt;
@@ -8,7 +10,7 @@ BOOL inRange(UINT32 val, UINT32 lower, UINT32 upper){
     return val >= lower && val <= upper;
 }
 
-VT_STATE vt_execute_handler(){
+void vt_execute_handler(){
   // TODO
   OutputDebugStringA("vt_execute_handler()\n");
   if(vt.code == '\b'){
@@ -24,9 +26,9 @@ VT_STATE vt_execute_handler(){
   }
 }
 
-VT_STATE vt_print_handler(){
+void vt_print_handler(){
   // TODO
-  // OutputDebugStringA("vt_print_handler()\n");
+  OutputDebugStringA("vt_print_handler()\n");
 
   if(ts.cx >= ts.cols){
     ts.cx = 0;
@@ -40,54 +42,57 @@ VT_STATE vt_print_handler(){
 
 
   if(ts.cx < ts.cols && ts.cy < ts.rows){
-    ts.lines[ts.cy].cells[ts.cx++].character = (wchar_t)vt.code;
     ts.lines[ts.cy].dirty = TRUE;
+    TCELL * cell = &ts.lines[ts.cy].cells[ts.cx++];
+    cell->character = (wchar_t)vt.code;
+    cell->fgColor = vt.fgColor;
+    cell->bgColor = vt.bgColor;
   }
 }
 
-VT_STATE vt_ignore_handler(){
+void vt_ignore_handler(){
   // TODO
   // OutputDebugStringA("vt_ignore_handler()\n");
 }
 
-VT_STATE vt_clear_handler(){
+void vt_clear_handler(){
   // TODO
   OutputDebugStringA("vt_clear_handler()\n");
   ZeroMemory(vt.param_str, vt.param_cap);
   vt.param_len = 0;
 }
 
-VT_STATE vt_hook_handler(){
+void vt_hook_handler(){
   // TODO
   // OutputDebugStringA("vt_hook_handler()\n");
 }
 
-VT_STATE vt_put_handler(){
+void vt_put_handler(){
   // TODO
   // OutputDebugStringA("vt_put_handler()\n");
 }
 
-VT_STATE vt_unhook_handler(){
+void vt_unhook_handler(){
   // TODO
   // OutputDebugStringA("vt_unhook_handler()\n");
 }
 
-VT_STATE vt_osc_start_handler(){
+void vt_osc_start_handler(){
   // TODO
   // OutputDebugStringA("vt_osc_start_handler()\n");
 }
 
-VT_STATE vt_osc_put_handler(){
+void vt_osc_put_handler(){
   // TODO
   // OutputDebugStringA("vt_osc_put_handler()\n");
 }
 
-VT_STATE vt_osc_end_handler(){
+void vt_osc_end_handler(){
   // TODO
   // OutputDebugStringA("vt_osc_end_handler()\n");
 }
 
-VT_STATE vt_param_handler(){
+void vt_param_handler(){
   // TODO
   OutputDebugStringA("vt_param_handler()\n");
 
@@ -103,19 +108,19 @@ VT_STATE vt_param_handler(){
   vt.param_str[vt.param_len+1] = '\0';
 }
 
-VT_STATE vt_collect_handler(){
+void vt_collect_handler(){
   // TODO
   OutputDebugStringA("vt_collect_handler()\n");
 }
 
-VT_STATE vt_esc_dispatch_handler(){
+void vt_esc_dispatch_handler(){
   // TODO
   OutputDebugStringA("vt_esc_dispatch_handler()\n");
 }
 
 
 
-VT_STATE vt_csi_dispatch_handler(){
+void vt_csi_dispatch_handler(){
 
   // TODO
   OutputDebugStringA("vt_csi_dispatch_handler()\n");
@@ -140,68 +145,109 @@ VT_STATE vt_csi_dispatch_handler(){
 
     OutputDebugStringA(token);
     OutputDebugStringA("\n");
-    token = strtok(NULL, " ");
+    token = strtok(NULL, ";");
   }
 
-  static int K_counter = 0;
+
   switch(vt.code){
+  case 'A':{
+    if(param_i == 1){
+      ts.cy-=params[0];
+      if(ts.cy < 0) ts.cy = 0;
+    }
+  } break;
+  case 'B':{
+    if(param_i == 1){
+      ts.cy+=params[0];
+      if(ts.cy > ts.rows) ts.cy = ts.rows-1;
+    }
+  } break;
+  case 'C':{
+    if(param_i == 1){
+      ts.cx += params[0];
+      if(ts.cx > ts.cols) ts.cx = ts.cols-1;
+    }
+  } break;
+  case 'D': {
+    if(param_i == 1){
+      ts.cx -= params[0];
+      if(ts.cx < 0) ts.cx = 0;
+    }
+  } break;
+  case 'E':{
+    if(param_i == 1){
+      ts.cy+=params[0];
+      if(ts.cy > ts.rows) ts.cy = ts.rows-1;
+      ts.cx = 0;
+    }
+  } break;
+  case 'F':{
+    if(param_i == 1){
+      ts.cy-=params[0];
+      if(ts.cy < 0) ts.cy = 0;
+      ts.cx = 0;
+    }
+  } break;
+  case 'G':{
+    if(param_i == 1){
+      ts.cx = params[0];
+    }
+  } break;
+  case 'l': {
+    if(param_i == 1 && params[0] == 25){
+      ts.showCursor = FALSE;
+    }
+  } break;
+
   case 'K':{
-    K_counter++;
-    if(param_i == 0) {
+    if(param_i == 0 || (param_i == 1 && params[0] == 0)) {
       int line = ts.cy;
       for(int i=ts.cx; i<ts.cols; i++)
 	ts.lines[line].cells[i].character = ' ';
     }
-    break;
-  }
+
+    switch(params[0]){
+    case 1:{
+      for(UINT32 i = 0 ; i < ts.cx; i++)
+	ts.lines[ts.cy].cells[i].character = ' ';
+    } break;
+    case 2:{
+      for(UINT32 i = 0; i<ts.cols; i++)
+	ts.lines[ts.cy].cells[i].character = ' ';
+    } break;
+    }
+  } break;
+
   case 'J': {
-    // int param = atoi(vt.param_list[0].buf);
-    // 0 erases from the current cursor position (inclusive) to the end of the display
-
-    // 1 erases from the beginning of the display up to
-    // and including the current cursor position
-
-    // 2 erases the entire display
-
     UINT32 param = 0;
 
-    if(param_i == 0) break;
+    if(param_i == 0 || (param_i == 1 && params[0] == 0))
+      for(UINT32 i = ts.cx; i < ts.cols; i++)
+	for(UINT32 j = ts.cy; j < ts.rows; j++)
+	  ts.lines[j].cells[i].character = ' ';
+
+
     else  param = params[0];
     // TODO
     switch(param){
-      // case  0: break;
-
-    case  1: break;
-    case  2:{
-      // int line = ts.cy;
-      // for(int i=0; i < ts.cols; i++){
-      // 	TerminalCharacter ** screen = ts.screen;
-      // 	screen[ts.cy][i].character = ' ';
-      // }
-      break;
-    }
-      // default: {
-      //   // clear until end of current line
-      //   for(int i=ts.cx; i<ts.cols; i++)
-      // 	ts.screen[ts.cy][i].character = ' ';
-
-      //   for(int i=ts.cy; i<ts.lines; i++){
-      // 	for(int j=0; j<ts.cols; j++){
-      // 	  ts.screen[i][j].character = ' ';
-      // 	}
-      //   }
-
-
-      //   break;
-      // }
+    case  1: {
+      for(UINT32 i = ts.cx; i > 0; i--)
+	for(UINT32 j = ts.cy; j > 0; j--)
+	  ts.lines[j].cells[i].character = ' ';
+    } break;
+    case  2: {
+	for(UINT32 i = 0; i < ts.cols; i++)
+	  for(UINT32 j = 0; j < ts.rows; j++)
+	    ts.lines[j].cells[i].character = ' ';
+    } break;
+    case 3: break; // TODO: erase saved lines... whatever that means
     }
 
-    break;
-  }
+    
+  } break;
   case 'H' : {
-    if(param_i == 0){
-      ts.cx = ts.cy = 0;
-    }
+    // reset cursor to home (0,0)
+    if(param_i == 0) ts.cx = ts.cy = 0;
 
     if(param_i == 2){
       UINT32 y = params[0];
@@ -212,8 +258,86 @@ VT_STATE vt_csi_dispatch_handler(){
       }
     }
 
-    break;
-  }
+
+  } break;
+
+  case 'h':{
+    if(param_i == 1 && params[0] == 25)
+      ts.showCursor = TRUE;
+  } break;
+    
+  case 'm':{
+    // https://gist.github.com/fnky/458719343aabd01cfb17a3a4f7296797
+
+    // reset everything
+    if(param_i == 0 ){
+      vt.graphics = NORMAL;
+      vt.fgColor = colors[15];
+      vt.bgColor = colors[0];
+    }
+
+    if(param_i == 1){
+      // TODO
+      switch(params[0]){
+      case 0: {
+	vt.graphics = NORMAL; 
+	vt.fgColor = colors[15];
+	vt.bgColor = colors[0];
+      } break; // reset everything
+      case 1: vt.graphics |= BOLD; break; // set bold mode 
+      case 2: vt.graphics |= DIM; break; // set dim mode 
+      case 3: vt.graphics |= ITALIC; break; // set italic mode 
+      case 4: vt.graphics |= UNDERLINE; break; // set underline mode 
+      case 5: vt.graphics |= BLINK; break; // set blinking mode 
+      case 7: vt.graphics |= NEGATIVE; break; // set negative mode
+      case 8: vt.graphics |= HIDDEN; break; // set hidden mode
+      case 9: vt.graphics |= STRIKETHROUGH; break; // set strikethrough mode
+
+      case 22: vt.graphics &= ~(BOLD | DIM); break; // reset bold and dim mode
+      case 23: vt.graphics &= ~(ITALIC); break; // reset italic mode
+      case 24: vt.graphics &= ~(UNDERLINE); break; // reset underline mode
+      case 25: vt.graphics &= ~(BLINK); break; // reset blinking mode
+      case 27: vt.graphics &= ~(NEGATIVE); break; // reset negative mode
+      case 28: vt.graphics &= ~(HIDDEN); break; // reset hidden mode
+      case 29: vt.graphics &= ~(STRIKETHROUGH); break; // reset strikethrough mode
+
+
+      case 30: vt.fgColor = colors[0];  break;
+      case 31: vt.fgColor = colors[9];  break; 
+      case 32: vt.fgColor = colors[10]; break; 
+      case 33: vt.fgColor = colors[11]; break; 
+      case 34: vt.fgColor = colors[12]; break; 
+      case 35: vt.fgColor = colors[13]; break; 
+      case 36: vt.fgColor = colors[14]; break; 
+      case 37: vt.fgColor = colors[15]; break; 
+
+      case 40: vt.bgColor = colors[0]; break;
+      case 41: vt.bgColor = colors[1]; break; 
+      case 42: vt.bgColor = colors[2]; break; 
+      case 43: vt.bgColor = colors[3]; break; 
+      case 44: vt.bgColor = colors[4]; break; 
+      case 45: vt.bgColor = colors[5]; break; 
+      case 46: vt.bgColor = colors[6]; break; 
+      case 47: vt.bgColor = colors[7]; break; 
+
+      default: break;
+      }
+
+    }else if(param_i == 3){
+      struct rgb color = colors[params[2]];
+
+      if(params[0] == 48 && params[1] == 5)
+	vt.fgColor = color;
+
+      if(params[0] == 38 && params[1] == 5)
+	vt.bgColor = color;
+    }
+    
+
+
+  } break;
+
+  default: break;
   }
 }
 
@@ -549,4 +673,6 @@ VOID vt_init(){
   vt.param_len = 0;
   vt.param_str = HeapAlloc(GetProcessHeap(), 0, vt.param_cap);
 
+  vt.fgColor = colors[15];
+  vt.bgColor = colors[0];
 }
