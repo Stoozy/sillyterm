@@ -27,7 +27,7 @@
     <ClCompile Include="renderer.cc">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="vt100.c">
+    <ClCompile Include="ansi.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -41,7 +41,7 @@
     <ClInclude Include="term.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="vt100.h">
+    <ClInclude Include="ansi.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

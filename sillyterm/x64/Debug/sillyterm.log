@@ -1,31 +1,11 @@
-﻿  vt100.c
-C:\Users\mahin\source\repos\sillyterm\sillyterm\vt100.c(23,5): warning C4033: 'vt_execute_handler' must return a value
-C:\Users\mahin\source\repos\sillyterm\sillyterm\vt100.c(102,36): warning C4244: '=': conversion from 'wchar_t' to 'char', possible loss of data
-C:\Users\mahin\source\repos\sillyterm\sillyterm\vt100.c(128,22): warning C4133: 'function': incompatible types - from 'wchar_t [2]' to 'LPCSTR'
-C:\Users\mahin\source\repos\sillyterm\sillyterm\vt100.c(152,25): warning C4018: '<': signed/unsigned mismatch
-C:\Users\mahin\source\repos\sillyterm\sillyterm\vt100.c(63): warning C4716: 'vt_hook_handler': must return a value
-C:\Users\mahin\source\repos\sillyterm\sillyterm\vt100.c(25): warning C4716: 'vt_execute_handler': must return a value
-C:\Users\mahin\source\repos\sillyterm\sillyterm\vt100.c(58): warning C4716: 'vt_clear_handler': must return a value
-C:\Users\mahin\source\repos\sillyterm\sillyterm\vt100.c(73): warning C4716: 'vt_unhook_handler': must return a value
-C:\Users\mahin\source\repos\sillyterm\sillyterm\vt100.c(46): warning C4715: 'vt_print_handler': not all control paths return a value
-C:\Users\mahin\source\repos\sillyterm\sillyterm\vt100.c(51): warning C4716: 'vt_ignore_handler': must return a value
-C:\Users\mahin\source\repos\sillyterm\sillyterm\vt100.c(68): warning C4716: 'vt_put_handler': must return a value
-C:\Users\mahin\source\repos\sillyterm\sillyterm\vt100.c(78): warning C4716: 'vt_osc_start_handler': must return a value
-C:\Users\mahin\source\repos\sillyterm\sillyterm\vt100.c(83): warning C4716: 'vt_osc_put_handler': must return a value
-C:\Users\mahin\source\repos\sillyterm\sillyterm\vt100.c(88): warning C4716: 'vt_osc_end_handler': must return a value
-C:\Users\mahin\source\repos\sillyterm\sillyterm\vt100.c(109): warning C4716: 'vt_collect_handler': must return a value
-C:\Users\mahin\source\repos\sillyterm\sillyterm\vt100.c(114): warning C4716: 'vt_esc_dispatch_handler': must return a value
-C:\Users\mahin\source\repos\sillyterm\sillyterm\vt100.c(104): warning C4716: 'vt_param_handler': must return a value
-C:\Users\mahin\source\repos\sillyterm\sillyterm\vt100.c(218): warning C4716: 'vt_csi_dispatch_handler': must return a value
+﻿  ansi.c
+C:\Users\mahin\source\repos\sillyterm\sillyterm\ansi.c(107,36): warning C4244: '=': conversion from 'wchar_t' to 'char', possible loss of data
+C:\Users\mahin\source\repos\sillyterm\sillyterm\ansi.c(133,22): warning C4133: 'function': incompatible types - from 'wchar_t [2]' to 'LPCSTR'
+C:\Users\mahin\source\repos\sillyterm\sillyterm\ansi.c(205,25): warning C4018: '<': signed/unsigned mismatch
   term.cc
-C:\Users\mahin\source\repos\sillyterm\sillyterm\term.cc(27,17): warning C4018: '<': signed/unsigned mismatch
-C:\Users\mahin\source\repos\sillyterm\sillyterm\term.cc(33,19): warning C4018: '<': signed/unsigned mismatch
-C:\Users\mahin\source\repos\sillyterm\sillyterm\term.cc(55,11): warning C4018: '<': signed/unsigned mismatch
-C:\Users\mahin\source\repos\sillyterm\sillyterm\term.cc(92,11): warning C4305: 'argument': truncation from 'int' to 'FLOAT'
-C:\Users\mahin\source\repos\sillyterm\sillyterm\term.cc(96,23): warning C4244: '=': conversion from 'FLOAT' to 'UINT32', possible loss of data
-C:\Users\mahin\source\repos\sillyterm\sillyterm\term.cc(97,24): warning C4244: '=': conversion from 'FLOAT' to 'UINT32', possible loss of data
-C:\Users\mahin\source\repos\sillyterm\sillyterm\term.cc(119,18): warning C4244: '=': conversion from 'UINT32' to 'FLOAT', possible loss of data
-C:\Users\mahin\source\repos\sillyterm\sillyterm\term.cc(120,19): warning C4244: '=': conversion from 'UINT32' to 'FLOAT', possible loss of data
-C:\Users\mahin\source\repos\sillyterm\sillyterm\term.cc(122,12): warning C4244: 'initializing': conversion from 'FLOAT' to 'int', possible loss of data
-C:\Users\mahin\source\repos\sillyterm\sillyterm\term.cc(123,12): warning C4244: 'initializing': conversion from 'FLOAT' to 'int', possible loss of data
+C:\Users\mahin\source\repos\sillyterm\sillyterm\term.cc(355,11): warning C4305: 'argument': truncation from 'int' to 'FLOAT'
+C:\Users\mahin\source\repos\sillyterm\sillyterm\term.cc(384,26): warning C4244: '=': conversion from 'UINT32' to 'FLOAT', possible loss of data
+C:\Users\mahin\source\repos\sillyterm\sillyterm\term.cc(385,27): warning C4244: '=': conversion from 'UINT32' to 'FLOAT', possible loss of data
+C:\Users\mahin\source\repos\sillyterm\sillyterm\term.cc(387,12): warning C4244: 'initializing': conversion from 'FLOAT' to 'int', possible loss of data
+C:\Users\mahin\source\repos\sillyterm\sillyterm\term.cc(388,12): warning C4244: 'initializing': conversion from 'FLOAT' to 'int', possible loss of data
   sillyterm.vcxproj -> C:\Users\mahin\source\repos\sillyterm\x64\Debug\sillyterm.exe

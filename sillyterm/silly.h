@@ -7,7 +7,7 @@ extern UINT32 CELL_HEIGHT;
 #define DEBUG_MODE
 
 #define FONT_SIZE 14.0f
-#define FONT_NAME "SF Mono"
+#define FONT_NAME "Consolas"
 
 #define BUFSIZE 1024
 #define CLASS_NAME TEXT("silly")

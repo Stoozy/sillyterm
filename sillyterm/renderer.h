@@ -1,5 +1,4 @@
 #pragma once
-
 #include "Windows.h"
 #include "term.h"
 
@@ -9,6 +8,10 @@
 #else
 #define EXTERNC
 #endif
+
+EXTERNC ID2D1SolidColorBrush * bgBrush;
+EXTERNC ID2D1SolidColorBrush * fgBrush;
+
 
 EXTERNC volatile BOOL rendererActive;
 EXTERNC volatile BOOL rendererActive;

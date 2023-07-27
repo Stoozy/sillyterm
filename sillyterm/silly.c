@@ -75,8 +75,8 @@ HRESULT SetupPseudoConsole(COORD size) {
     }
 
     // PCWSTR childApplication = L"C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe";
-    // PCWSTR childApplication = L"C:\\Program Files\\Git\\bin\\bash.exe";
-    PCWSTR childApplication = L"C:\\windows\\system32\\cmd.exe";
+    PCWSTR childApplication = L"C:\\Program Files\\Git\\bin\\bash.exe";
+    // PCWSTR childApplication = L"C:\\windows\\system32\\cmd.exe";
 
     // Create mutable text string for CreateProcessW command line string.
     const size_t charsRequired = wcslen(childApplication) + 1; // +1 null terminator
@@ -115,8 +115,11 @@ HRESULT SetupPseudoConsole(COORD size) {
         return HRESULT_FROM_WIN32(GetLastError());
     }
     else {
-        CloseHandle(inputReadSide);
-        CloseHandle(outputWriteSide);
+      CloseHandle( pi.hProcess );
+      CloseHandle( pi.hThread );
+
+      CloseHandle(inputReadSide);
+      CloseHandle(outputWriteSide);
     }
 
     return hr;
@@ -168,8 +171,7 @@ void SillytermHandleKeyboard(HWND hwnd, WPARAM wParam, LPARAM lParam){
     BOOL isKeyReleased = (keyFlags & KF_UP) == KF_UP;             // transition-state flag, 1 on keyup
 
     // if we want to distinguish these keys:
-    switch (vkCode)
-    {
+    switch (vkCode) {
     case VK_CAPITAL: kbdState.caps = !kbdState.caps; break;
     case VK_SHIFT:   // converts to VK_LSHIFT or VK_RSHIFT
       if(isKeyReleased) kbdState.shiftDown = FALSE;
@@ -208,11 +210,12 @@ void SillytermHandleKeyboard(HWND hwnd, WPARAM wParam, LPARAM lParam){
       if(isKeyReleased)
 	return;
 
-      GetKeyboardState(&keyboardState);
+      if(!GetKeyboardState(&keyboardState))
+	OutputDebugStringA("Couldn't get keyboard state");
 
       char buf[16] = {0};
       int chars = ToAscii(vkCode, scanCode, &keyboardState, &buf, kbdState.altDown);
-      const char msg[256];
+      char msg[256] = {0};
       sprintf_s( msg, 200, "SillytermHandleKbd(): Received %c \0", buf[0]);
       OutputDebugStringA(msg);
       OutputDebugStringA("\n");
@@ -249,19 +252,25 @@ void SillytermRun() {
   DWORD availableBytes = 0;
   DWORD bytesRead = 0;
 
+  HWND hwnd = 0;
+
   while(!quit){
 #ifdef DEBUG_MODE
     ftime(&start);
 #endif
 
     if(PeekMessageA(&msg, NULL, 0, 0, PM_REMOVE)){
+      if(hwnd == 0){
+	hwnd = msg.hwnd;
+      }
+
       TranslateMessage(&msg);
       DispatchMessageA(&msg);
     }
 
     if(PeekNamedPipe( outputReadSide, NULL, NULL, NULL, &availableBytes, NULL)){
       if(availableBytes == 0) goto render;
-      const char msg[256];
+      char msg[256] = {0};
       sprintf_s( msg, 200, "%d bytes available.\n\0", availableBytes);
       OutputDebugStringA(msg);
 
@@ -307,9 +316,10 @@ void SillytermRun() {
     if(ms_elapsed >= 1000.0f){
       // ~ a second has passed
       char buffer[256] = {0};
-      sprintf_s(buffer, 256, "fps: %d \n", frames);
+      sprintf_s(buffer, 256, "Sillyterm | %d FPS \n", frames);
       OutputDebugStringA(buffer);
 
+      //SetWindowText(hwnd, buffer);
       frames = 0;
       ms_elapsed = 0;
     }

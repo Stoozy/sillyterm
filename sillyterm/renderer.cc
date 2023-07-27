@@ -73,6 +73,7 @@ void DestroyDeviceResources() {
 }
 
 
+
 static BOOL prevFrameUpdated = FALSE;
 void RendererDraw(){
   // OutputDebugStringA("RendererDraw(): called\n");
@@ -93,36 +94,43 @@ void RendererDraw(){
     update_count++;
     prevFrameUpdated = TRUE;
 
-    for(int j=0; j<ts.cols; j++){
-      TCELL cell = ts.lines[i].cells[j];
+    for(UINT32 j=0; j<ts.cols; j++){
+      TCELL  cell = ts.lines[i].cells[j];
       int left =  CELL_WIDTH * j;
       int top =  CELL_HEIGHT * i;
-      D2D1_RECT_F cellRect = D2D1::RectF(left,
-					 top,
-					 left + CELL_WIDTH,
-					 top + CELL_HEIGHT);
+      D2D1_RECT_F cellRect = D2D1::RectF((FLOAT)left,
+					 (FLOAT)top,
+					 (FLOAT) left + CELL_WIDTH,
+					 (FLOAT)top + CELL_HEIGHT);
 
 
       HRESULT hr = pDWriteFactory_->CreateTextLayout(&cell.character,
 						     1,
 						     pTextFormat_,
-						     CELL_WIDTH,
-						     CELL_HEIGHT,
+						     (FLOAT)CELL_WIDTH,
+						     (FLOAT)CELL_HEIGHT,
 						     &pTextLayout_);
 
       D2D1_POINT_2F origin = D2D1::Point2F(static_cast<FLOAT>(left),
 					   static_cast<FLOAT>(top));
 
+      D2D1_COLOR_F bgColor = D2D1::ColorF(D2D1::ColorF(cell.bgColor.r,
+						       cell.bgColor.g,
+						       cell.bgColor.b, 1.0f));
+
+      D2D1_COLOR_F fgColor = D2D1::ColorF(D2D1::ColorF(cell.fgColor.r,
+						       cell.fgColor.g,
+						       cell.fgColor.b, 1.0f));
+      fgBrush->SetColor(&fgColor);
+      bgBrush->SetColor(&bgColor);
+
       pRT->FillRectangle(cellRect, bgBrush);
       pRT->DrawTextLayout(origin, pTextLayout_, fgBrush);
-      // pRT->DrawText(&termChar.character, 1, pTextFormat_, cell, pWhiteBrush_);
 
       SafeRelease(&pTextLayout_);
-      // SafeRelease(&bgBrush);
-      // SafeRelease(&fgBrush);
     }
 
-    //ts.lines[i].dirty = FALSE;
+    // ts.lines[i].dirty = FALSE;
     // OutputDebugStringA("RendererDraw(): Drew text!\n");
   }
 
@@ -131,16 +139,16 @@ void RendererDraw(){
 
   // draw cursor
 
-  int left =  CELL_WIDTH * ts.cx;
-  int top  =  CELL_HEIGHT * ts.cy;
+  if(ts.showCursor){
+    int left =  CELL_WIDTH * ts.cx;
+    int top  =  CELL_HEIGHT * ts.cy;
 
-  D2D1_RECT_F cursorRect = D2D1::RectF(
-    static_cast<FLOAT>( left ),
-    static_cast<FLOAT>( top ),
-    static_cast<FLOAT>( left + CELL_WIDTH),
-      static_cast<FLOAT>( top + CELL_HEIGHT));
-  pRT->FillRectangle(cursorRect, pWhiteBrush_);
-
+    D2D1_RECT_F cursorRect = D2D1::RectF(static_cast<FLOAT>(left),
+					 static_cast<FLOAT>(top),
+					 static_cast<FLOAT>(left + CELL_WIDTH),
+					 static_cast<FLOAT>(top + CELL_HEIGHT));
+    pRT->FillRectangle(cursorRect, fgBrush);
+  }
 
   pRT->EndDraw();
 }
@@ -167,9 +175,9 @@ void RendererInit(HWND hwnd){
 					     L"en-us",
 					     &pTextFormat_);
 
-        // Center align (horizontally) the text.
-        if (SUCCEEDED(hr)) hr = pTextFormat_->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_LEADING);
-        if (SUCCEEDED(hr)) hr = pTextFormat_->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_NEAR);
+      // Center align (horizontally) the text.
+      if (SUCCEEDED(hr)) hr = pTextFormat_->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_LEADING);
+      if (SUCCEEDED(hr)) hr = pTextFormat_->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_NEAR);
 
     }
   }
@@ -182,17 +190,13 @@ void RendererInit(HWND hwnd){
   hr = pRT->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::Black),
 				  &bgBrush );
   if(FAILED(hr)){
-    OutputDebugStringA("Couldn't create brush!\n'");
+    // OutputDebugStringA("Couldn't create brush!\n'");
     exit(-1);
   }
 
   hr = pRT->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::White),
 				  &fgBrush );
-  if(FAILED(hr)){
-    OutputDebugStringA("Couldn't create brush!\n'");
-    exit(-1);
-  }
-
+  // if(FAILED(hr)) OutputDebugStringA("Couldn't create brush!\n'");
 
 
   // DestroyDeviceResources();
